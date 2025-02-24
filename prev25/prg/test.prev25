@@ -3,5 +3,6 @@ integer = null
 str = "Thi s is a str ing"
 '\0x20' '\0x3A' '\0x7E'
 # this is a comment
+char c = '0xAA'
 int b = 'c'
 int d = 'r'

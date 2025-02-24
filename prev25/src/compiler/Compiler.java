@@ -157,9 +157,10 @@ public class Compiler {
 					try (final LexAn lexan = new LexAn()) {
 						LocLogToken token = lexan.lexer.nextToken();
 						while (token.getType() != LexAn.LocLogToken.EOF) {
-							if(token.getType() == 52) {
+							Report.info(token.toString());
+							/*if(token.getType() == 52) {
 								throw new Report.Error(token.location().toString() + " : Lexical error: " + token.getText());
-							}
+							}*/
 							token = lexan.lexer.nextToken();
 						}
 					}
