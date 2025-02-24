@@ -11,18 +11,6 @@ lexer grammar Prev25Lexer;
     public LexAn.LocLogToken nextToken() {
         return (LexAn.LocLogToken) super.nextToken();
     }
-
-
-
-    @Override
-    public void recover(LexerNoViableAltException e) {
-    	throw new Report.Error(e.toString());
-    }
-
-    @Override
-    public void recover(RecognitionException e) {
-    	throw new Report.Error(e.toString());
-    }
 }
 fragment STRCHAR: HEX 
                 | ~[\u0000-\u001F\u007F-\uFFFF"\\] 
@@ -83,4 +71,4 @@ WHILE           : 'while';
 IDENTIFIER      : [a-zA-Z_][0-9a-zA-Z_]*;
 COMMENT         : '#'~[\r\n]*;
 WHITESPACE      : [ \n\r\t]+ -> skip ;
-ERRSTR		: .;
+ERROR           : . ;

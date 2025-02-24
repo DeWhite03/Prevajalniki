@@ -5,6 +5,8 @@ import java.nio.file.*;
 import java.nio.file.attribute.*;
 import java.util.*;
 
+import org.antlr.v4.runtime.BaseErrorListener;
+
 import compiler.common.report.*;
 import compiler.phase.lexan.*;
 import compiler.phase.lexan.LexAn.LocLogToken;
@@ -157,10 +159,11 @@ public class Compiler {
 					try (final LexAn lexan = new LexAn()) {
 						LocLogToken token = lexan.lexer.nextToken();
 						while (token.getType() != LexAn.LocLogToken.EOF) {
-							Report.info(token.toString());
-							/*if(token.getType() == 52) {
-								throw new Report.Error(token.location().toString() + " : Lexical error: " + token.getText());
-							}*/
+							// Report.info(String.valueOf(token.getType()) + "token: " + token.toString());
+							// token.log(lexan.logger);
+							if (token.getType() == 52) {
+								throw new Report.Error("position: "+ token.location().toString()+ ", token: " + token.getText());
+							}
 							token = lexan.lexer.nextToken();
 						}
 					}
@@ -181,5 +184,4 @@ public class Compiler {
 			System.exit(1);
 		}
 	}
-
 }

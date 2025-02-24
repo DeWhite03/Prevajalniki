@@ -1,8 +1,15 @@
+# ''
 typ int 123
 integer = null
 str = "Thi s is a str ing"
 '\0x20' '\0x3A' '\0x7E'
-# this is a comment
-char c = '0xAA'
+asdf # this is a comment
+# char c = '0xAA'
 int b = 'c'
 int d = 'r'
+& | == != < > <= >= * / % + - ! . ^ = : , { } ( ) [ ]
+bool char doing else end false fun if in int let null return sizeof then true typ var void while
+"& | == != < > <= >= * / % + - ! . ^ = : , { } ( ) [ ]"
+"bool char do else end false fun if in int"" let null return sizeof\"\"\\ then true typ var void while"
+'\\'
+'\''
