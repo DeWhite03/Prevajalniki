@@ -7,6 +7,7 @@ import java.util.*;
 
 import compiler.common.report.*;
 import compiler.phase.lexan.*;
+import compiler.phase.lexan.LexAn.LocLogToken;
 
 /**
  * The Prev25 compiler.
@@ -154,7 +155,12 @@ public class Compiler {
 				if (cmdLineOptValues.get("--target-phase").equals("lexan")
 						|| cmdLineOptValues.get("--target-phase").equals("all")) {
 					try (final LexAn lexan = new LexAn()) {
-						while (lexan.lexer.nextToken().getType() != LexAn.LocLogToken.EOF) {
+						LocLogToken token = lexan.lexer.nextToken();
+						while (token.getType() != LexAn.LocLogToken.EOF) {
+							if(token.getType() == 52) {
+								throw new Report.Error(token.location().toString() + " : Lexical error: " + token.getText());
+							}
+							token = lexan.lexer.nextToken();
 						}
 					}
 					break;
