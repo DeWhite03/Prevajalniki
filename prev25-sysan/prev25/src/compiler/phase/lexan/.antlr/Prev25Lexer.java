@@ -1,4 +1,4 @@
-// Generated from /home/denis/Workspace/prevajalniki/prev25/src/compiler/phase/lexan/Prev25Lexer.g4 by ANTLR 4.13.1
+// Generated from /home/denis/workspace/Prevajalniki/prev25-sysan/prev25/src/compiler/phase/lexan/Prev25Lexer.g4 by ANTLR 4.13.1
 
     package compiler.phase.lexan;
 

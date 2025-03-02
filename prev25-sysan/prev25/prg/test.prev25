@@ -1,16 +1,2 @@
-#typ one = int
-#var two : int
-#fun func_one (arg1 : int, arg2 : string, arg3 : char): int
-fun func_one (arg1 : int, arg2 : string, arg3 : char): int = 
-
-while true do
-    "hey",
-    'c',
-    123
-end,
-
-if true then "blabla" end,
-if true then "blabla" else "bleble" end,
-let typ a = int in "blabla" end,
-
-return 0
+fun main() : void =
+1 | 2 & 3

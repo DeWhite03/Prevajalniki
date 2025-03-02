@@ -70,7 +70,7 @@ RETURN          : 'return';
 SIZEOF          : 'sizeof';
 THEN            : 'then';
 TRUE            : 'true';
-TYP            : 'typ';
+TYP             : 'typ';
 VAR             : 'var';
 VOID            : 'void';
 WHILE           : 'while';
