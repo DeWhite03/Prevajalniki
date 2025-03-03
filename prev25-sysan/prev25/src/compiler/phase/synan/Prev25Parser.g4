@@ -41,10 +41,14 @@ defs // SYN: 1
 def
 	: TYP IDENTIFIER ASSIGNMENT type // SYN: 2
 	| VAR IDENTIFIER COLON type // SYN: 3
-	| FUN IDENTIFIER LPAR args RPAR COLON type implementation // SYN: 4
+	| FUN IDENTIFIER LPAR args1 RPAR COLON type implementation // SYN: 4
+	;
+args1
+	: args 
+	| 
 	;
 implementation // SYN: 5
-	:ASSIGNMENT statements
+	: ASSIGNMENT statements
 	|
 	;
 // args
@@ -53,7 +57,6 @@ implementation // SYN: 5
 // 	;
 args // function args
 	: arg args2
-	|
 	;
 args2
 	: COMMA args
@@ -62,6 +65,7 @@ args2
 arg // argument
 	: IDENTIFIER COLON type
 	;
+
 statements // lines of code
 	: statement COMMA statements
 	| statement
@@ -80,14 +84,14 @@ empty_statements // for if's where statements are not required.
 	;
 
 statement
-	: expression expr_extension
-	| RETURN expression
-	| WHILE expression DO statements END
-	| IF expression THEN empty_statements else END
+	: expr expr_extension
+	| RETURN expr
+	| WHILE expr DO statements END
+	| IF expr THEN empty_statements else END
 	| LET defs IN statements END
 	;
 expr_extension
-	: ASSIGNMENT expression
+	: ASSIGNMENT expr
 	|
 	;
 else
@@ -110,14 +114,6 @@ types2
 	: COMMA types
 	|
 	;
-expression
-	: LPAR expression RPAR
-	| LBRACE expression COLON type RBRACE
-	| POW expression
-	| expression POW
-	| expr
-	;
-
 expr
 	: expr OR expr2
 	| expr2
@@ -147,15 +143,20 @@ expr6
 	;
 expr7
 	: expr7 POW
-	| terminals LBRACKET terminals RBRACKET
+	| LBRACE expr COLON type RBRACE
+	| LPAR expr RPAR
+	| expr7 LBRACKET expr RBRACKET
 	| SIZEOF type
-	| terminals DOT IDENTIFIER
-	| terminals LPAR exprs RPAR
+	| expr7 DOT IDENTIFIER
+	| expr7 LPAR exprs_in RPAR
 	| terminals
 	;
-exprs
-	: expression exprs2
+exprs_in
+	: exprs
 	|
+	;
+exprs
+	: expr exprs2
 	;
 exprs2
 	: COMMA exprs

@@ -1,8 +1,0 @@
-module:compiler
-compiler
-compiler.common
-compiler.common.logger
-compiler.common.report
-compiler.phase
-compiler.phase.lexan
-compiler.phase.synan
