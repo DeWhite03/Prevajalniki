@@ -1,0 +1,169 @@
+parser grammar Prev25Parser;
+
+@header {
+
+	package compiler.phase.synan;
+	
+	import java.util.*;
+	import compiler.common.report.*;
+	import compiler.phase.lexan.*;
+
+}
+
+@members {
+
+	private Location loc(Token     tok) { return new Location((LexAn.LocLogToken)tok); }
+	private Location loc(Token     tok1, Token     tok2) { return new Location((LexAn.LocLogToken)tok1, (LexAn.LocLogToken)tok2); }
+	private Location loc(Token     tok1, Locatable loc2) { return new Location((LexAn.LocLogToken)tok1, loc2); }
+	private Location loc(Locatable loc1, Token     tok2) { return new Location(loc1, (LexAn.LocLogToken)tok2); }
+	private Location loc(Locatable loc1, Locatable loc2) { return new Location(loc1, loc2); }
+
+}
+
+options{
+    tokenVocab=Prev25Lexer;
+}
+
+source returns [ AST.Nodes<AST.FullDefn> ast ]
+	: defs EOF { $ast = new AST.Nodes<Ast.FullDefn> ($defs.ast); }
+	;
+defs returns [ List<AST.FullDefn> ast ]
+	: def d=defs { $ast = $d.ast; $ast.addLast($def.ast); }
+	| def { $ast = new List<AST.fullDefn>(); $ast.addLast($def.ast); }
+	;
+def returns [ AST.FullDefn ast]
+	: TYP IDENTIFIER ASSIGNMENT type { $ast = new TypDef(loc($TYP, $type.ast.location()), $IDENTIFIER.text(), $type.ast) } // SYN: 2
+	| VAR IDENTIFIER COLON type { $ast = new VarDef(loc($VAR, $type.ast.location()), $IDENTIFIER.text(), $type.ast) } // SYN: 3
+	| FUN IDENTIFIER LPAR args1 RPAR COLON type impl=implementation [$args1.ast, $type.ast] { }
+	;
+args1
+	: args 
+	| 
+	;
+implementation [ List<ParDefn> args, Type type] returns [ AST.FunDefn ast] // SYN: 5
+	: ASSIGNMENT statements { $ast = new DefFunDef(loc)}
+	|
+	;
+args // function args
+	: arg args2
+	;
+args2
+	: COMMA args
+	|
+	;
+arg // argument
+	: IDENTIFIER COLON type
+	;
+
+statements // lines of code
+	: statement COMMA statements
+	| statement
+	;
+empty_statements // for if's where statements are not required.
+	: statement COMMA statements
+	| statement
+	|
+	;
+
+statement
+	: expr expr_extension
+	| RETURN expr
+	| WHILE expr DO statements END
+	| IF expr THEN empty_statements else END
+	| LET defs IN statements END
+	;
+expr_extension
+	: ASSIGNMENT expr
+	|
+	;
+else
+	: ELSE empty_statements
+	| 
+	;
+type
+	: INT | CHAR | BOOL | VOID | IDENTIFIER
+	| LBRACKET INTCONST RBRACKET type
+	| POW type
+	| LT args GT
+	| LBRACE args RBRACE
+	| LPAR types RPAR COLON type
+	;
+types
+	: type types2
+	|
+	;
+types2
+	: COMMA types
+	|
+	;
+expr
+	: expr OR expr2
+	| expr2
+	;
+expr2
+	: expr2 AND expr3
+	| expr3
+	;
+expr3
+	: expr4 comparitive_ops expr4
+	| expr4
+	;
+expr4
+	: expr4 additive_ops expr5
+	| expr5
+	;
+expr5
+	: expr5 multiplicative_ops expr6
+	| expr6
+	;
+expr6
+	: PLUS expr6
+	| MINUS expr6
+	| NOT expr6
+	| POW expr6
+	| expr7
+	;
+expr7
+	: expr7 POW
+	| LBRACE expr COLON type RBRACE
+	| LPAR expr RPAR
+	| expr7 LBRACKET expr RBRACKET
+	| SIZEOF type
+	| expr7 DOT IDENTIFIER
+	| expr7 LPAR exprs_in RPAR
+	| terminals
+	;
+exprs_in
+	: exprs
+	|
+	;
+exprs
+	: expr exprs2
+	;
+exprs2
+	: COMMA exprs
+	|
+	;
+terminals
+	: INTCONST 
+	| STRCONST 
+	| CHARCONST 
+	| TRUE 
+	| FALSE 
+	| NULL
+	| IDENTIFIER
+	;
+multiplicative_ops
+	: STAR
+	| DIV
+	| MOD
+	;
+additive_ops
+	: PLUS | MINUS
+	;
+comparitive_ops
+	: EQ | NEQ | LTE | GTE | LT | GT
+	;
+prefix
+	: PLUS | MINUS | NOT
+	;
