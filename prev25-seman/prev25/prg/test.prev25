@@ -1,2 +1,0 @@
-typ b = int,
-fun abc(b : b) : void

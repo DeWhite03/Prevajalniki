@@ -153,7 +153,7 @@ exprs_in returns [ List<AST.Expr> ast ]
 	| { $ast = new ArrayList<AST.Expr>(); }
 	;
 exprs returns [ List<AST.Expr> ast ]
-	: expr exprs2 { $ast = $exprs2.ast; $ast.addLast($expr.ast); }
+	: expr exprs2 { $ast = $exprs2.ast; $ast.add(0, $expr.ast); }
 	;
 exprs2 returns [ List<AST.Expr> ast ]
 	: COMMA exprs { $ast = $exprs.ast; }

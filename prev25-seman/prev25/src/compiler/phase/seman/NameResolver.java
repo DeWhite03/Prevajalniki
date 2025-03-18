@@ -35,16 +35,34 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 	private SymbTable symbTable = new SymbTable();
 
 	// *** TODO ***
+    private AST.Defn resolveName(String name, Node node) {
+        try{
+            SemAn.defAt.put(node, symbTable.fnd(name));
 
+        }catch(NameResolver.SymbTable.CannotFndNameException e){
+            throw new Report.Error(node.location(), "Can't find declaration: " + name);
+        }
+        return null;
+    }
 
 		// ----- Trees -----
 
 	@Override
 	public Object visit(Nodes<? extends Node> nodes, Mode mode) {
-		for (final Node node : nodes)
+		for (final Node node : nodes) {
 			if ((node != null) || (!compiler.Compiler.devMode())) {
+				// Report.info("======== node declare mode started ========");
 				node.accept(this, Mode.DECLARE);
+				// Report.info("======== node declare mode done ========");
 			}
+		}
+		for (final Node node : nodes) {
+			if ((node != null) || (!compiler.Compiler.devMode())) {
+				// Report.info("======== node resolve mode started ========");
+				node.accept(this, Mode.RESOLVE);
+				// Report.info("======== node resolve mode done ========");
+			}
+		}
 		return null;
 	}
 
@@ -56,6 +74,7 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 			if (mode == Mode.DECLARE) {
 				try {
 					symbTable.ins(typDefn.name, typDefn);
+					Report.info("Type: " + typDefn.name + " declared");
 				} catch (Exception e) {
 					throw new Report.Error(typDefn.location(),
 							"Couldn't define type: `" + typDefn.name + "`. Is type already defined?");
@@ -72,6 +91,7 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 			if (mode == Mode.DECLARE) {
 				try {
 					symbTable.ins(varDefn.name, varDefn);
+					Report.info("Variable: " + varDefn.name + " declared");
 				} catch (Exception e) {
 					throw new Report.Error(varDefn.location(),
 							"Couldn't define variable: `" + varDefn.name + "`. Is variable already defined?");
@@ -88,6 +108,7 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 			if (mode == Mode.DECLARE) {
 				try {
 					symbTable.ins(defFunDefn.name, defFunDefn);
+					Report.info("Function: " + defFunDefn.name + " declared");
 				} catch (Exception e) {
 					throw new Report.Error(defFunDefn.location(),
 							"Couldn't define function: `" + defFunDefn.name + "`. Is function already defined?");
@@ -97,17 +118,26 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 		if ((defFunDefn.pars != null) || (!compiler.Compiler.devMode())) {
 			try {
 				symbTable.newScope();
+				Report.info("New scope created for:" + defFunDefn.name);
 			} catch (Exception e) {
 				throw new Report.Error(defFunDefn.location(), "Couldn't create new scope");
 			}
-			defFunDefn.pars.accept(this, mode);
+			// if (mode == Mode.RESOLVE) {
+				defFunDefn.pars.accept(this, mode);
+			// }
 		}
 		if ((defFunDefn.type != null) || (!compiler.Compiler.devMode()))
 		{
-			defFunDefn.type.accept(this, Mode.RESOLVE);
+			if (mode == Mode.RESOLVE) {
+				defFunDefn.type.accept(this, mode);
+			}
 		}
 		if ((defFunDefn.stmts != null) || (!compiler.Compiler.devMode()))
-			defFunDefn.stmts.accept(this, mode);
+		{
+			if (mode == Mode.RESOLVE) {
+				defFunDefn.stmts.accept(this, mode);
+			}
+		}
 		try {
 			symbTable.oldScope();
 		} catch (Exception e) {
@@ -122,6 +152,7 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 			if (mode == Mode.DECLARE) {
 				try {
 					symbTable.ins(extFunDefn.name, extFunDefn);
+					Report.info("Function: " + extFunDefn.name + " declared");
 				} catch (Exception e) {
 					throw new Report.Error(extFunDefn.location(),
 							"Couldn't define function: `" + extFunDefn.name + "`. Is function already defined?");
@@ -131,13 +162,18 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 		if ((extFunDefn.pars != null) || (!compiler.Compiler.devMode())) {
 			try {
 				symbTable.newScope();
+				Report.info("New scope created for:" + extFunDefn.name);
 			} catch (Exception e) {
 				throw new Report.Error(extFunDefn.location(), "Couldn't create new scope");
 			}
-			extFunDefn.pars.accept(this, mode);
+			// if (mode == Mode.RESOLVE) {
+				extFunDefn.pars.accept(this, mode);
+			// }
 		}
 		if ((extFunDefn.type != null) || (!compiler.Compiler.devMode())) {
-			extFunDefn.type.accept(this, Mode.RESOLVE);
+			if (mode == Mode.RESOLVE) {
+				extFunDefn.type.accept(this, mode);
+			}
 		}
 		try {
 			symbTable.oldScope();
@@ -153,76 +189,100 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 			if (mode == Mode.DECLARE) {
 				try {
 					symbTable.ins(parDefn.name, parDefn);
+					Report.info("Parameter: " + parDefn.name + " declared");
 				} catch (Exception e) {
 					throw new Report.Error(parDefn.location(),
 							"Couldn't define parameter: `" + parDefn.name + "`. Is parameter already defined?");
 				}
 			}
-			parDefn.type.accept(this, Mode.RESOLVE);
+			parDefn.type.accept(this, mode);
 		}
 		return null;
 	}
 
-	@Override
-	public Object visit(CompDefn compDefn, Mode mode) {
-		if ((compDefn.type != null) || (!compiler.Compiler.devMode()))
-			compDefn.type.accept(this, Mode.RESOLVE);
-		return null;
-	}
 
 	// ----- Statements -----
 
 	@Override
 	public Object visit(LetStmt letStmt, Mode mode) {
 		if ((letStmt.defns != null) || (!compiler.Compiler.devMode())) {
-			if(mode == Mode.DECLARE) {
+			if (mode == Mode.RESOLVE) {
 				try {
 					symbTable.newScope();
+					Report.info("New scope created for:" + letStmt.defns.location());
 				} catch (Exception e) {
 					throw new Report.Error(letStmt.location(), "Couldn't create new scope");
 				}
+
+				// We need to modify how we process the definitions
+				// First, process all type definitions in DECLARE mode
+				Report.info("Processing type definitions");
+				for (Node node : letStmt.defns) {
+					if (node instanceof TypDefn) {
+						node.accept(this, Mode.DECLARE);
+					}
+				}
+				Report.info("Processing type definitions done");
+				// Then process the rest of the definitions in DECLARE mode
+				for (Node node : letStmt.defns) {
+					if (!(node instanceof TypDefn)) {
+						node.accept(this, Mode.DECLARE);
+					}
+				}
+				Report.info("Resolving variable definitions");
+				for (Node node : letStmt.defns) {
+						node.accept(this, Mode.RESOLVE);
+				}
 			}
-			letStmt.defns.accept(this, mode);
 		}
-		if ((letStmt.stmts != null) || (!compiler.Compiler.devMode()))
-			letStmt.stmts.accept(this, mode);
-		try {
-			symbTable.oldScope();
-		} catch (Exception e) {
-			throw new Report.Error(letStmt.location(), "Couldn't destroy scope");
+
+		if ((letStmt.stmts != null) || (!compiler.Compiler.devMode())) {
+			if (mode == Mode.RESOLVE) {
+				letStmt.stmts.accept(this, mode);
+			}
 		}
+
+		if (mode == Mode.RESOLVE) {
+			try {
+				Report.info("Scope destroyed for:" + letStmt.defns);
+				symbTable.oldScope();
+			} catch (Exception e) {
+				throw new Report.Error(letStmt.location(), "Couldn't destroy scope");
+			}
+		}
+
 		return null;
 	}
-
+	
 	@Override
 	public Object visit(AssignStmt assignStmt, Mode mode) {
 		if ((assignStmt.dstExpr != null) || (!compiler.Compiler.devMode()))
-			assignStmt.dstExpr.accept(this, Mode.RESOLVE);
+			assignStmt.dstExpr.accept(this, mode);
 		if ((assignStmt.srcExpr != null) || (!compiler.Compiler.devMode()))
-			assignStmt.srcExpr.accept(this, Mode.RESOLVE);
+			assignStmt.srcExpr.accept(this, mode);
 		return null;
 	}
 
 	@Override
 	public Object visit(ExprStmt callStmt, Mode mode) {
 		if ((callStmt.expr != null) || (!compiler.Compiler.devMode()))
-			callStmt.expr.accept(this, Mode.RESOLVE);
+			callStmt.expr.accept(this, mode);
 		return null;
 	}
 
 	@Override
 	public Object visit(IfThenStmt ifThenStmt, Mode mode) {
 		if ((ifThenStmt.condExpr != null) || (!compiler.Compiler.devMode()))
-			ifThenStmt.condExpr.accept(this, Mode.RESOLVE);
+			ifThenStmt.condExpr.accept(this, mode);
 		if ((ifThenStmt.thenStmt != null) || (!compiler.Compiler.devMode()))
-			ifThenStmt.thenStmt.accept(this, Mode.RESOLVE);
+			ifThenStmt.thenStmt.accept(this, mode);
 		return null;
 	}
 
 	@Override
 	public Object visit(IfThenElseStmt ifThenElseStmt, Mode mode) {
 		if ((ifThenElseStmt.condExpr != null) || (!compiler.Compiler.devMode()))
-			ifThenElseStmt.condExpr.accept(this, Mode.RESOLVE);
+			ifThenElseStmt.condExpr.accept(this, mode);
 		if ((ifThenElseStmt.thenStmt != null) || (!compiler.Compiler.devMode()))
 			ifThenElseStmt.thenStmt.accept(this, mode);
 		if ((ifThenElseStmt.elseStmt != null) || (!compiler.Compiler.devMode()))
@@ -240,7 +300,7 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 	@Override
 	public Object visit(WhileStmt whileStmt, Mode mode) {
 		if ((whileStmt.condExpr != null) || (!compiler.Compiler.devMode()))
-			whileStmt.condExpr.accept(this, Mode.RESOLVE);
+			whileStmt.condExpr.accept(this, mode);
 		if ((whileStmt.stmts != null) || (!compiler.Compiler.devMode()))
 			whileStmt.stmts.accept(this, mode);
 		return null;
@@ -256,37 +316,37 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 	@Override
 	public Object visit(ArrType arrType, Mode mode) {
 		if ((arrType.elemType != null) || (!compiler.Compiler.devMode()))
-			arrType.elemType.accept(this, Mode.RESOLVE);
+			arrType.elemType.accept(this, mode);
 		return null;
 	}
 
 	@Override
 	public Object visit(PtrType ptrType, Mode mode) {
 		if ((ptrType.baseType != null) || (!compiler.Compiler.devMode()))
-			ptrType.baseType.accept(this, Mode.RESOLVE);
+			ptrType.baseType.accept(this, mode);
 		return null;
 	}
 
 	@Override
 	public Object visit(StrType strType, Mode mode) {
 		if ((strType.comps != null) || (!compiler.Compiler.devMode()))
-			strType.comps.accept(this, Mode.RESOLVE);
+			strType.comps.accept(this, mode);
 		return null;
 	}
 
 	@Override
 	public Object visit(UniType uniType, Mode mode) {
 		if ((uniType.comps != null) || (!compiler.Compiler.devMode()))
-			uniType.comps.accept(this, Mode.RESOLVE);
+			uniType.comps.accept(this, mode);
 		return null;
 	}
 
 	@Override
 	public Object visit(FunType funType, Mode mode) {
 		if ((funType.parTypes != null) || (!compiler.Compiler.devMode()))
-			funType.parTypes.accept(this, Mode.RESOLVE);
+			funType.parTypes.accept(this, mode);
 		if ((funType.resType != null) || (!compiler.Compiler.devMode()))
-			funType.resType.accept(this, Mode.RESOLVE);
+			funType.resType.accept(this, mode);
 		return null;
 	}
 
@@ -294,7 +354,7 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 	public Object visit(NameType nameType, Mode mode) {
 		if (mode == Mode.RESOLVE) {
 			try {
-				symbTable.fnd(nameType.name);
+				resolveName(nameType.name, nameType);
 			} catch (Exception e) {
 				throw new Report.Error(nameType.location(), "Couldn't find type: `" + nameType.name + "`");
 			}
@@ -308,9 +368,9 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 	@Override
 	public Object visit(ArrExpr arrExpr, Mode mode) {
 		if ((arrExpr.arrExpr != null) || (!compiler.Compiler.devMode()))
-			arrExpr.arrExpr.accept(this, Mode.RESOLVE);
+			arrExpr.arrExpr.accept(this, mode);
 		if ((arrExpr.idx != null) || (!compiler.Compiler.devMode()))
-			arrExpr.idx.accept(this, Mode.RESOLVE);
+			arrExpr.idx.accept(this, mode);
 		return null;
 	}
 
@@ -322,34 +382,34 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 	@Override
 	public Object visit(BinExpr binExpr, Mode mode) {
 		if ((binExpr.fstExpr != null) || (!compiler.Compiler.devMode()))
-			binExpr.fstExpr.accept(this, Mode.RESOLVE);
+			binExpr.fstExpr.accept(this, mode);
 		if ((binExpr.sndExpr != null) || (!compiler.Compiler.devMode()))
-			binExpr.sndExpr.accept(this, Mode.RESOLVE);
+			binExpr.sndExpr.accept(this, mode);
 		return null;
 	}
 
 	@Override
 	public Object visit(CallExpr callExpr, Mode mode) {
 		if ((callExpr.funExpr != null) || (!compiler.Compiler.devMode()))
-			callExpr.funExpr.accept(this, Mode.RESOLVE);
+			callExpr.funExpr.accept(this, mode);
 		if ((callExpr.argExprs != null) || (!compiler.Compiler.devMode()))
-			callExpr.argExprs.accept(this, Mode.RESOLVE);
+			callExpr.argExprs.accept(this, mode);
 		return null;
 	}
 
 	@Override
 	public Object visit(CastExpr castExpr, Mode mode) {
 		if ((castExpr.type != null) || (!compiler.Compiler.devMode()))
-			castExpr.type.accept(this, Mode.RESOLVE);
+			castExpr.type.accept(this, mode);
 		if ((castExpr.expr != null) || (!compiler.Compiler.devMode()))
-			castExpr.expr.accept(this, Mode.RESOLVE);
+			castExpr.expr.accept(this, mode);
 		return null;
 	}
 
 	@Override
 	public Object visit(CompExpr compExpr, Mode mode) {
 		if ((compExpr.recExpr != null) || (!compiler.Compiler.devMode()))
-			compExpr.recExpr.accept(this, Mode.RESOLVE);
+			compExpr.recExpr.accept(this, mode);
 		return null;
 	}
 
@@ -357,9 +417,9 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 	public Object visit(NameExpr nameExpr, Mode mode) {
 		if (mode == Mode.RESOLVE) {
 			try {
-				symbTable.fnd(nameExpr.name);
+				resolveName(nameExpr.name, nameExpr);
 			} catch (Exception e) {
-				throw new Report.Error(nameExpr.location(), "Couldn't find variable: `" + nameExpr.name + "`");
+				throw new Report.Error(nameExpr.location(), "Couldn't find name: `" + nameExpr.name + "`");
 			}
 			
 		}
@@ -369,21 +429,21 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 	@Override
 	public Object visit(PfxExpr pfxExpr, Mode mode) {
 		if ((pfxExpr.subExpr != null) || (!compiler.Compiler.devMode()))
-			pfxExpr.subExpr.accept(this, Mode.RESOLVE);
+			pfxExpr.subExpr.accept(this, mode);
 		return null;
 	}
 
 	@Override
 	public Object visit(SfxExpr sfxExpr, Mode mode) {
 		if ((sfxExpr.subExpr != null) || (!compiler.Compiler.devMode()))
-			sfxExpr.subExpr.accept(this, Mode.RESOLVE);
+			sfxExpr.subExpr.accept(this, mode);
 		return null;
 	}
 
 	@Override
 	public Object visit(SizeExpr sizeExpr, Mode mode) {
 		if ((sizeExpr.type != null) || (!compiler.Compiler.devMode()))
-			sizeExpr.type.accept(this, Mode.RESOLVE);
+			sizeExpr.type.accept(this, mode);
 		return null;
 	}
 	// ===== SYMBOL TABLE =====
