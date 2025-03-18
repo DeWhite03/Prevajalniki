@@ -141,7 +141,7 @@ expr6 returns [ AST.Expr ast ]
 expr7 returns [ AST.Expr ast ]
 	: e=expr7 POW { $ast = new AST.SfxExpr(loc($e.ast, $POW), AST.SfxExpr.Oper.PTR, $e.ast); }
 	| LBRACE expr COLON type RBRACE { $ast = new AST.CastExpr(loc($LBRACE, $RBRACE), $type.ast, $expr.ast); }
-	| LPAR expr RPAR { $ast = $expr.ast; }
+	| LPAR expr RPAR { $ast = $expr.ast; $ast.relocate(loc($LPAR, $RPAR)); }
 	| e=expr7 LBRACKET expr RBRACKET { $ast = new AST.ArrExpr(loc($e.ast, $RBRACKET), $e.ast, $expr.ast); }
 	| SIZEOF type { $ast = new AST.SizeExpr(loc($SIZEOF, $type.ast), $type.ast); }
 	| e=expr7 DOT IDENTIFIER { $ast = new AST.CompExpr(loc($e.ast, $IDENTIFIER), $e.ast, $IDENTIFIER.getText()); }
@@ -153,7 +153,7 @@ exprs_in returns [ List<AST.Expr> ast ]
 	| { $ast = new ArrayList<AST.Expr>(); }
 	;
 exprs returns [ List<AST.Expr> ast ]
-	: expr exprs2 { $ast = $exprs2.ast; $ast.addLast($expr.ast); }
+	: expr exprs2 { $ast = $exprs2.ast; $ast.add(0, $expr.ast); }
 	;
 exprs2 returns [ List<AST.Expr> ast ]
 	: COMMA exprs { $ast = $exprs.ast; }

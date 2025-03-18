@@ -4,6 +4,7 @@ import java.util.*;
 
 import compiler.common.report.*;
 import compiler.phase.abstr.*;
+import compiler.phase.abstr.AST.*;
 
 /**
  * Name resolver.
@@ -35,105 +36,193 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 
 	// *** TODO ***
 
+
 		// ----- Trees -----
+
 	@Override
-	public default Result visit(Nodes<? extends Node> nodes, Mode mode) {
+	public Object visit(Nodes<? extends Node> nodes, Mode mode) {
 		for (final Node node : nodes)
-			if ((node != null) || (!compiler.Compiler.devMode()))
-				node.accept(this, mode);
+			if ((node != null) || (!compiler.Compiler.devMode())) {
+				node.accept(this, Mode.DECLARE);
+			}
 		return null;
 	}
 
 	// ----- Definitions -----
 
 	@Override
-	public default Result visit(TypDefn typDefn, Mode mode) {
-		if ((typDefn.type != null) || (!compiler.Compiler.devMode()))
+	public Object visit(TypDefn typDefn, Mode mode) {
+		if ((typDefn.type != null) || (!compiler.Compiler.devMode())) {
+			if (mode == Mode.DECLARE) {
+				try {
+					symbTable.ins(typDefn.name, typDefn);
+				} catch (Exception e) {
+					throw new Report.Error(typDefn.location(),
+							"Couldn't define type: `" + typDefn.name + "`. Is type already defined?");
+				}
+			}
 			typDefn.type.accept(this, mode);
+		}
 		return null;
 	}
 
 	@Override
-	public default Result visit(VarDefn varDefn, Mode mode) {
-		if ((varDefn.type != null) || (!compiler.Compiler.devMode()))
+	public Object visit(VarDefn varDefn, Mode mode) {
+		if ((varDefn.type != null) || (!compiler.Compiler.devMode())){
+			if (mode == Mode.DECLARE) {
+				try {
+					symbTable.ins(varDefn.name, varDefn);
+				} catch (Exception e) {
+					throw new Report.Error(varDefn.location(),
+							"Couldn't define variable: `" + varDefn.name + "`. Is variable already defined?");
+				}
+			}
 			varDefn.type.accept(this, mode);
+		}
 		return null;
 	}
 
 	@Override
-	public default Result visit(DefFunDefn defFunDefn, Mode mode) {
-		if ((defFunDefn.pars != null) || (!compiler.Compiler.devMode()))
+	public Object visit(DefFunDefn defFunDefn, Mode mode) {
+		if (defFunDefn.name != null || (!compiler.Compiler.devMode())) {
+			if (mode == Mode.DECLARE) {
+				try {
+					symbTable.ins(defFunDefn.name, defFunDefn);
+				} catch (Exception e) {
+					throw new Report.Error(defFunDefn.location(),
+							"Couldn't define function: `" + defFunDefn.name + "`. Is function already defined?");
+				}
+			}
+		}
+		if ((defFunDefn.pars != null) || (!compiler.Compiler.devMode())) {
+			try {
+				symbTable.newScope();
+			} catch (Exception e) {
+				throw new Report.Error(defFunDefn.location(), "Couldn't create new scope");
+			}
 			defFunDefn.pars.accept(this, mode);
+		}
 		if ((defFunDefn.type != null) || (!compiler.Compiler.devMode()))
-			defFunDefn.type.accept(this, mode);
+		{
+			defFunDefn.type.accept(this, Mode.RESOLVE);
+		}
 		if ((defFunDefn.stmts != null) || (!compiler.Compiler.devMode()))
 			defFunDefn.stmts.accept(this, mode);
+		try {
+			symbTable.oldScope();
+		} catch (Exception e) {
+			throw new Report.Error(defFunDefn.location(), "Couldn't destroy scope");
+		}
 		return null;
 	}
 
 	@Override
-	public default Result visit(ExtFunDefn extFunDefn, Mode mode) {
-		if ((extFunDefn.pars != null) || (!compiler.Compiler.devMode()))
+	public Object visit(ExtFunDefn extFunDefn, Mode mode) {
+		if (extFunDefn.name != null || (!compiler.Compiler.devMode())) {
+			if (mode == Mode.DECLARE) {
+				try {
+					symbTable.ins(extFunDefn.name, extFunDefn);
+				} catch (Exception e) {
+					throw new Report.Error(extFunDefn.location(),
+							"Couldn't define function: `" + extFunDefn.name + "`. Is function already defined?");
+				}
+			}
+		}
+		if ((extFunDefn.pars != null) || (!compiler.Compiler.devMode())) {
+			try {
+				symbTable.newScope();
+			} catch (Exception e) {
+				throw new Report.Error(extFunDefn.location(), "Couldn't create new scope");
+			}
 			extFunDefn.pars.accept(this, mode);
-		if ((extFunDefn.type != null) || (!compiler.Compiler.devMode()))
-			extFunDefn.type.accept(this, mode);
+		}
+		if ((extFunDefn.type != null) || (!compiler.Compiler.devMode())) {
+			extFunDefn.type.accept(this, Mode.RESOLVE);
+		}
+		try {
+			symbTable.oldScope();
+		} catch (Exception e) {
+			throw new Report.Error(extFunDefn.location(), "Couldn't destroy scope");
+		}
 		return null;
 	}
 
 	@Override
-	public default Result visit(ParDefn parDefn, Mode mode) {
-		if ((parDefn.type != null) || (!compiler.Compiler.devMode()))
-			parDefn.type.accept(this, mode);
+	public Object visit(ParDefn parDefn, Mode mode) {
+		if ((parDefn.type != null) || (!compiler.Compiler.devMode())) {
+			if (mode == Mode.DECLARE) {
+				try {
+					symbTable.ins(parDefn.name, parDefn);
+				} catch (Exception e) {
+					throw new Report.Error(parDefn.location(),
+							"Couldn't define parameter: `" + parDefn.name + "`. Is parameter already defined?");
+				}
+			}
+			parDefn.type.accept(this, Mode.RESOLVE);
+		}
 		return null;
 	}
 
 	@Override
-	public default Result visit(CompDefn compDefn, Mode mode) {
+	public Object visit(CompDefn compDefn, Mode mode) {
 		if ((compDefn.type != null) || (!compiler.Compiler.devMode()))
-			compDefn.type.accept(this, mode);
+			compDefn.type.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	// ----- Statements -----
 
 	@Override
-	public default Result visit(LetStmt letStmt, Mode mode) {
-		if ((letStmt.defns != null) || (!compiler.Compiler.devMode()))
+	public Object visit(LetStmt letStmt, Mode mode) {
+		if ((letStmt.defns != null) || (!compiler.Compiler.devMode())) {
+			if(mode == Mode.DECLARE) {
+				try {
+					symbTable.newScope();
+				} catch (Exception e) {
+					throw new Report.Error(letStmt.location(), "Couldn't create new scope");
+				}
+			}
 			letStmt.defns.accept(this, mode);
+		}
 		if ((letStmt.stmts != null) || (!compiler.Compiler.devMode()))
 			letStmt.stmts.accept(this, mode);
+		try {
+			symbTable.oldScope();
+		} catch (Exception e) {
+			throw new Report.Error(letStmt.location(), "Couldn't destroy scope");
+		}
 		return null;
 	}
 
 	@Override
-	public default Result visit(AssignStmt assignStmt, Mode mode) {
+	public Object visit(AssignStmt assignStmt, Mode mode) {
 		if ((assignStmt.dstExpr != null) || (!compiler.Compiler.devMode()))
-			assignStmt.dstExpr.accept(this, mode);
+			assignStmt.dstExpr.accept(this, Mode.RESOLVE);
 		if ((assignStmt.srcExpr != null) || (!compiler.Compiler.devMode()))
-			assignStmt.srcExpr.accept(this, mode);
+			assignStmt.srcExpr.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(ExprStmt callStmt, Mode mode) {
+	public Object visit(ExprStmt callStmt, Mode mode) {
 		if ((callStmt.expr != null) || (!compiler.Compiler.devMode()))
-			callStmt.expr.accept(this, mode);
+			callStmt.expr.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(IfThenStmt ifThenStmt, Mode mode) {
+	public Object visit(IfThenStmt ifThenStmt, Mode mode) {
 		if ((ifThenStmt.condExpr != null) || (!compiler.Compiler.devMode()))
-			ifThenStmt.condExpr.accept(this, mode);
+			ifThenStmt.condExpr.accept(this, Mode.RESOLVE);
 		if ((ifThenStmt.thenStmt != null) || (!compiler.Compiler.devMode()))
-			ifThenStmt.thenStmt.accept(this, mode);
+			ifThenStmt.thenStmt.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(IfThenElseStmt ifThenElseStmt, Mode mode) {
+	public Object visit(IfThenElseStmt ifThenElseStmt, Mode mode) {
 		if ((ifThenElseStmt.condExpr != null) || (!compiler.Compiler.devMode()))
-			ifThenElseStmt.condExpr.accept(this, mode);
+			ifThenElseStmt.condExpr.accept(this, Mode.RESOLVE);
 		if ((ifThenElseStmt.thenStmt != null) || (!compiler.Compiler.devMode()))
 			ifThenElseStmt.thenStmt.accept(this, mode);
 		if ((ifThenElseStmt.elseStmt != null) || (!compiler.Compiler.devMode()))
@@ -142,16 +231,16 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 	}
 
 	@Override
-	public default Result visit(ReturnStmt returnStmt, Mode mode) {
+	public Object visit(ReturnStmt returnStmt, Mode mode) {
 		if ((returnStmt.retExpr != null) || (!compiler.Compiler.devMode()))
 			returnStmt.retExpr.accept(this, mode);
 		return null;
 	}
 
 	@Override
-	public default Result visit(WhileStmt whileStmt, Mode mode) {
+	public Object visit(WhileStmt whileStmt, Mode mode) {
 		if ((whileStmt.condExpr != null) || (!compiler.Compiler.devMode()))
-			whileStmt.condExpr.accept(this, mode);
+			whileStmt.condExpr.accept(this, Mode.RESOLVE);
 		if ((whileStmt.stmts != null) || (!compiler.Compiler.devMode()))
 			whileStmt.stmts.accept(this, mode);
 		return null;
@@ -160,125 +249,141 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 	// ----- Types -----
 
 	@Override
-	public default Result visit(AtomType atomType, Mode mode) {
+	public Object visit(AtomType atomType, Mode mode) {
 		return null;
 	}
 
 	@Override
-	public default Result visit(ArrType arrType, Mode mode) {
+	public Object visit(ArrType arrType, Mode mode) {
 		if ((arrType.elemType != null) || (!compiler.Compiler.devMode()))
-			arrType.elemType.accept(this, mode);
+			arrType.elemType.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(PtrType ptrType, Mode mode) {
+	public Object visit(PtrType ptrType, Mode mode) {
 		if ((ptrType.baseType != null) || (!compiler.Compiler.devMode()))
-			ptrType.baseType.accept(this, mode);
+			ptrType.baseType.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(StrType strType, Mode mode) {
+	public Object visit(StrType strType, Mode mode) {
 		if ((strType.comps != null) || (!compiler.Compiler.devMode()))
-			strType.comps.accept(this, mode);
+			strType.comps.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(UniType uniType, Mode mode) {
+	public Object visit(UniType uniType, Mode mode) {
 		if ((uniType.comps != null) || (!compiler.Compiler.devMode()))
-			uniType.comps.accept(this, mode);
+			uniType.comps.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(FunType funType, Mode mode) {
+	public Object visit(FunType funType, Mode mode) {
 		if ((funType.parTypes != null) || (!compiler.Compiler.devMode()))
-			funType.parTypes.accept(this, mode);
+			funType.parTypes.accept(this, Mode.RESOLVE);
 		if ((funType.resType != null) || (!compiler.Compiler.devMode()))
-			funType.resType.accept(this, mode);
+			funType.resType.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(NameType nameType, Mode mode) {
+	public Object visit(NameType nameType, Mode mode) {
+		if (mode == Mode.RESOLVE) {
+			try {
+				symbTable.fnd(nameType.name);
+			} catch (Exception e) {
+				throw new Report.Error(nameType.location(), "Couldn't find type: `" + nameType.name + "`");
+			}
+			
+		}
 		return null;
 	}
 
 	// ----- Expressions -----
 
 	@Override
-	public default Result visit(ArrExpr arrExpr, Mode mode) {
+	public Object visit(ArrExpr arrExpr, Mode mode) {
 		if ((arrExpr.arrExpr != null) || (!compiler.Compiler.devMode()))
-			arrExpr.arrExpr.accept(this, mode);
+			arrExpr.arrExpr.accept(this, Mode.RESOLVE);
 		if ((arrExpr.idx != null) || (!compiler.Compiler.devMode()))
-			arrExpr.idx.accept(this, mode);
+			arrExpr.idx.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(AtomExpr atomExpr, Mode mode) {
+	public Object visit(AtomExpr atomExpr, Mode mode) {
 		return null;
 	}
 
 	@Override
-	public default Result visit(BinExpr binExpr, Mode mode) {
+	public Object visit(BinExpr binExpr, Mode mode) {
 		if ((binExpr.fstExpr != null) || (!compiler.Compiler.devMode()))
-			binExpr.fstExpr.accept(this, mode);
+			binExpr.fstExpr.accept(this, Mode.RESOLVE);
 		if ((binExpr.sndExpr != null) || (!compiler.Compiler.devMode()))
-			binExpr.sndExpr.accept(this, mode);
+			binExpr.sndExpr.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(CallExpr callExpr, Mode mode) {
+	public Object visit(CallExpr callExpr, Mode mode) {
 		if ((callExpr.funExpr != null) || (!compiler.Compiler.devMode()))
-			callExpr.funExpr.accept(this, mode);
-		if ((callExpr.modeExprs != null) || (!compiler.Compiler.devMode()))
-			callExpr.modeExprs.accept(this, mode);
+			callExpr.funExpr.accept(this, Mode.RESOLVE);
+		if ((callExpr.argExprs != null) || (!compiler.Compiler.devMode()))
+			callExpr.argExprs.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(CastExpr castExpr, Mode mode) {
+	public Object visit(CastExpr castExpr, Mode mode) {
 		if ((castExpr.type != null) || (!compiler.Compiler.devMode()))
-			castExpr.type.accept(this, mode);
+			castExpr.type.accept(this, Mode.RESOLVE);
 		if ((castExpr.expr != null) || (!compiler.Compiler.devMode()))
-			castExpr.expr.accept(this, mode);
+			castExpr.expr.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(CompExpr compExpr, Mode mode) {
+	public Object visit(CompExpr compExpr, Mode mode) {
 		if ((compExpr.recExpr != null) || (!compiler.Compiler.devMode()))
-			compExpr.recExpr.accept(this, mode);
+			compExpr.recExpr.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(NameExpr nameExpr, Mode mode) {
+	public Object visit(NameExpr nameExpr, Mode mode) {
+		if (mode == Mode.RESOLVE) {
+			try {
+				symbTable.fnd(nameExpr.name);
+			} catch (Exception e) {
+				throw new Report.Error(nameExpr.location(), "Couldn't find variable: `" + nameExpr.name + "`");
+			}
+			
+		}
 		return null;
 	}
 
 	@Override
-	public default Result visit(PfxExpr pfxExpr, Mode mode) {
+	public Object visit(PfxExpr pfxExpr, Mode mode) {
 		if ((pfxExpr.subExpr != null) || (!compiler.Compiler.devMode()))
-			pfxExpr.subExpr.accept(this, mode);
+			pfxExpr.subExpr.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(SfxExpr sfxExpr, Mode mode) {
+	public Object visit(SfxExpr sfxExpr, Mode mode) {
 		if ((sfxExpr.subExpr != null) || (!compiler.Compiler.devMode()))
-			sfxExpr.subExpr.accept(this, mode);
+			sfxExpr.subExpr.accept(this, Mode.RESOLVE);
 		return null;
 	}
 
 	@Override
-	public default Result visit(SizeExpr sizeExpr, Mode mode) {
+	public Object visit(SizeExpr sizeExpr, Mode mode) {
 		if ((sizeExpr.type != null) || (!compiler.Compiler.devMode()))
-			sizeExpr.type.accept(this, mode);
+			sizeExpr.type.accept(this, Mode.RESOLVE);
 		return null;
 	}
 	// ===== SYMBOL TABLE =====
