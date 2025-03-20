@@ -184,8 +184,8 @@ public class Compiler {
 				// Semantic analysis.
 				try (SemAn seman = new SemAn()) {
 					Abstr.tree.accept(new NameResolver(), null);
-					Abstr.tree.accept(new TypeResolver(), null);
-					Abstr.tree.accept(new TypeChecker(), null);
+					// Abstr.tree.accept(new TypeResolver(), null);
+					// Abstr.tree.accept(new TypeChecker(), null);
 					Abstr.Logger logger = new Abstr.Logger(seman.logger);
 					logger.addSubvisitor(new SemAn.Logger(seman.logger));
 					Abstr.tree.accept(logger, "Nodes<Defn>");
@@ -198,7 +198,7 @@ public class Compiler {
 			}
 
 			// Let's hope we ever come this far.
-			// But beware:
+			// But beware. There be dragons ahead:
 			// 1. The generated translation of the source file might be erroneous :-o
 			// 2. The source file might not be what the programmer intended it to be ;-)
 			Report.info("Done.");
