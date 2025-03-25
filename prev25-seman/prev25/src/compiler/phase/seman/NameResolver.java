@@ -74,7 +74,7 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 			if (mode == Mode.DECLARE) {
 				try {
 					symbTable.ins(typDefn.name, typDefn);
-					Report.info("Type: " + typDefn.name + " declared");
+					// Report.info("Type: " + typDefn.name + " declared");
 				} catch (Exception e) {
 					throw new Report.Error(typDefn.location(),
 							"Couldn't define type: `" + typDefn.name + "`. Is type already defined?");
@@ -91,7 +91,7 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 			if (mode == Mode.DECLARE) {
 				try {
 					symbTable.ins(varDefn.name, varDefn);
-					Report.info("Variable: " + varDefn.name + " declared");
+					// Report.info("Variable: " + varDefn.name + " declared");
 				} catch (Exception e) {
 					throw new Report.Error(varDefn.location(),
 							"Couldn't define variable: `" + varDefn.name + "`. Is variable already defined?");
@@ -108,7 +108,7 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 			if (mode == Mode.DECLARE) {
 				try {
 					symbTable.ins(defFunDefn.name, defFunDefn);
-					Report.info("Function: " + defFunDefn.name + " declared");
+					// Report.info("Function: " + defFunDefn.name + " declared");
 				} catch (Exception e) {
 					throw new Report.Error(defFunDefn.location(),
 							"Couldn't define function: `" + defFunDefn.name + "`. Is function already defined?");
@@ -118,7 +118,7 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 		if ((defFunDefn.pars != null) || (!compiler.Compiler.devMode())) {
 			try {
 				symbTable.newScope();
-				Report.info("New scope created for:" + defFunDefn.name);
+				// Report.info("New scope created for:" + defFunDefn.name);
 			} catch (Exception e) {
 				throw new Report.Error(defFunDefn.location(), "Couldn't create new scope");
 			}
@@ -152,7 +152,7 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 			if (mode == Mode.DECLARE) {
 				try {
 					symbTable.ins(extFunDefn.name, extFunDefn);
-					Report.info("Function: " + extFunDefn.name + " declared");
+					// Report.info("Function: " + extFunDefn.name + " declared");
 				} catch (Exception e) {
 					throw new Report.Error(extFunDefn.location(),
 							"Couldn't define function: `" + extFunDefn.name + "`. Is function already defined?");
@@ -162,7 +162,7 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 		if ((extFunDefn.pars != null) || (!compiler.Compiler.devMode())) {
 			try {
 				symbTable.newScope();
-				Report.info("New scope created for:" + extFunDefn.name);
+				// Report.info("New scope created for:" + extFunDefn.name);
 			} catch (Exception e) {
 				throw new Report.Error(extFunDefn.location(), "Couldn't create new scope");
 			}
@@ -189,7 +189,7 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 			if (mode == Mode.DECLARE) {
 				try {
 					symbTable.ins(parDefn.name, parDefn);
-					Report.info("Parameter: " + parDefn.name + " declared");
+					// Report.info("Parameter: " + parDefn.name + " declared");
 				} catch (Exception e) {
 					throw new Report.Error(parDefn.location(),
 							"Couldn't define parameter: `" + parDefn.name + "`. Is parameter already defined?");
@@ -209,27 +209,27 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 			if (mode == Mode.RESOLVE) {
 				try {
 					symbTable.newScope();
-					Report.info("New scope created for:" + letStmt.defns.location());
+					// Report.info("New scope created for:" + letStmt.defns.location());
 				} catch (Exception e) {
 					throw new Report.Error(letStmt.location(), "Couldn't create new scope");
 				}
 
 				// We need to modify how we process the definitions
 				// First, process all type definitions in DECLARE mode
-				Report.info("Processing type definitions");
+				// Report.info("Processing type definitions");
 				for (Node node : letStmt.defns) {
 					if (node instanceof TypDefn) {
 						node.accept(this, Mode.DECLARE);
 					}
 				}
-				Report.info("Processing type definitions done");
+				// Report.info("Processing type definitions done");
 				// Then process the rest of the definitions in DECLARE mode
 				for (Node node : letStmt.defns) {
 					if (!(node instanceof TypDefn)) {
 						node.accept(this, Mode.DECLARE);
 					}
 				}
-				Report.info("Resolving variable definitions");
+				// Report.info("Resolving variable definitions");
 				for (Node node : letStmt.defns) {
 						node.accept(this, Mode.RESOLVE);
 				}
@@ -244,7 +244,7 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 
 		if (mode == Mode.RESOLVE) {
 			try {
-				Report.info("Scope destroyed for:" + letStmt.defns);
+				// Report.info("Scope destroyed for:" + letStmt.defns);
 				symbTable.oldScope();
 			} catch (Exception e) {
 				throw new Report.Error(letStmt.location(), "Couldn't destroy scope");
@@ -330,14 +330,22 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 	@Override
 	public Object visit(StrType strType, Mode mode) {
 		if ((strType.comps != null) || (!compiler.Compiler.devMode()))
-			strType.comps.accept(this, mode);
+			if (mode == Mode.RESOLVE) {
+				for (Node comp : strType.comps) {
+					comp.accept(this, mode);
+				}
+			}
 		return null;
 	}
 
 	@Override
 	public Object visit(UniType uniType, Mode mode) {
 		if ((uniType.comps != null) || (!compiler.Compiler.devMode()))
-			uniType.comps.accept(this, mode);
+		if (mode == Mode.RESOLVE) {
+			for (Node comp : uniType.comps) {
+				comp.accept(this, mode);
+			}
+		}
 		return null;
 	}
 

@@ -1,0 +1,3 @@
+typ a = { x : b }
+typ b = { y : a }
+typ Integer = int
