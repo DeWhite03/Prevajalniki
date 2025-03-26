@@ -34,7 +34,6 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 	/** The symbol table. */
 	private SymbTable symbTable = new SymbTable();
 
-	// *** TODO ***
     private AST.Defn resolveName(String name, Node node) {
         try{
             SemAn.defAt.put(node, symbTable.fnd(name));

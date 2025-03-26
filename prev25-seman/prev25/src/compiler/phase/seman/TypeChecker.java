@@ -16,6 +16,4 @@ public class TypeChecker implements AST.FullVisitor<TYP.Type, NameResolver.Mode>
 	public TypeChecker() {
 	}
 
-        /*** TODO ***/
-
 }
