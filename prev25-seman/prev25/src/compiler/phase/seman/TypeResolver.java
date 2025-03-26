@@ -27,14 +27,13 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 		}
 		for (final AST.Node node : nodes){
-			node.accept(this, NameResolver.Mode.RESOLVE);
+			node.accept(this, Mode.RESOLVE);
 		}
-
 		return null;
 	}
 
 	@Override
-	public TYP.Type visit(AST.AtomType atomType, Mode mode){
+	public TYP.Type visit(AST.AtomType atomType, Mode mode) {
 		if(mode == Mode.RESOLVE){
 			TYP.Type type;
 			switch(atomType.type){
@@ -61,16 +60,14 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 	@Override
 	public TYP.Type visit(AST.ArrType arrType, Mode mode) {
-		if(mode == Mode.RESOLVE){
-			Long arrLen = Long.parseLong(arrType.numElems);
-			TYP.Type tmp = arrType.elemType.accept(this, mode);
-			if(arrLen < 1){
-				throw new Report.Error("Array can not be empty!");
-			}
-			if (tmp instanceof TYP.VoidType) {
-				throw new Report.Error(arrType, "Can not create array of type void.");
-			}
-			return SemAn.isType.put(arrType, new TYP.ArrType(tmp, arrLen));
+		if (mode == Mode.RESOLVE) {
+			Long numElems = Long.parseLong(arrType.numElems);
+			TYP.Type baseType = arrType.elemType.accept(this, mode);
+			if (numElems <= 0)
+				throw new Report.Error(arrType, "Array size must be greater than 0");
+			if (baseType instanceof TYP.VoidType)
+				throw new Report.Error(arrType, "Array cannot be of type void");
+			return SemAn.isType.put(arrType, new TYP.ArrType(baseType, numElems));
 		}
 		return null;
 	}
@@ -78,53 +75,50 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 	@Override
 	public TYP.Type visit(AST.PtrType ptrType, Mode mode) {
-	
-		if(mode == Mode.RESOLVE){
-			TYP.Type type = ptrType.baseType.accept(this, mode);
-			if(type instanceof TYP.VoidType){
-				throw new Report.Error(ptrType, "Base pointer cannot be void!");
-			}
-			return SemAn.isType.put(ptrType, type);
+		if (mode == Mode.RESOLVE) {
+			TYP.Type baseType = ptrType.baseType.accept(this, mode);
+			if(baseType instanceof TYP.VoidType)
+				throw new Report.Error(ptrType, "Pointer cannot be of type void");
+			return SemAn.isType.put(ptrType, new TYP.PtrType(baseType));
 		}
 		return null;
 	}
 
 	@Override
 	public TYP.Type visit(AST.StrType strType, Mode mode) {
-		if(mode == Mode.DECLARE){
-            TYP.Type typ =  new TYP.StrType(null);
-            return SemAn.isType.put(strType, typ);
-        } else if (mode == Mode.RESOLVE){
-			LinkedList<TYP.Type> typelist = new LinkedList<TYP.Type>();
-            for (Node comp : strType.comps) {
-				TYP.Type b = comp.accept(this, mode);
-				if(b instanceof TYP.VoidType){
-					throw new Report.Error(strType, "Components cannot be void");
-				}
-                typelist.addFirst(b);
-            }
-			var typ = new TYP.StrType(typelist);
-			return SemAn.isType.put(strType, typ);
-        }
-        return null;
+		if(mode == Mode.DECLARE)
+			SemAn.isType.put(strType, new TYP.StrType(null));
+		if (mode == Mode.RESOLVE) {
+			ArrayList<TYP.Type> compTypes = new ArrayList<TYP.Type>();
+			for (AST.CompDefn comp : strType.comps) {
+				TYP.Type type = comp.accept(this, mode);
+				if(type instanceof TYP.VoidType)
+					throw new Report.Error(strType, "Struct component cannot be of type void");
+				compTypes.add(type);
+			}
+			if(compTypes.size() == 0)
+				throw new Report.Error(strType, "Struct must have at least one component");
+			return SemAn.isType.put(strType, new TYP.StrType(compTypes));
+		}
+		return null;
 	}
 
 	@Override
 	public TYP.Type visit(AST.UniType uniType, Mode mode) {
-		if(mode == Mode.DECLARE){
-            TYP.Type type =  new TYP.UniType(null);
-            return SemAn.isType.put(uniType, type);
-        } else if (mode == Mode.RESOLVE){
-			LinkedList<TYP.Type> typeList = new LinkedList<TYP.Type>();
-            for (Node comp : uniType.comps) {
-                TYP.Type type = comp.accept(this, mode);
-				if(type instanceof TYP.VoidType){
-					throw new Report.Error(uniType, "Components cannot be void");
-				}
-                typeList.addFirst(type);
-            }
-			return SemAn.isType.put(uniType, new TYP.UniType(typeList));
-        }
+		if (mode == Mode.DECLARE)
+			SemAn.isType.put(uniType, new TYP.UniType(null));
+		if (mode == Mode.RESOLVE) {
+			ArrayList<TYP.Type> compTypes = new ArrayList<TYP.Type>();
+			for (AST.CompDefn comp : uniType.comps) {
+				TYP.Type type = comp.accept(this, mode);
+				if(type instanceof TYP.VoidType)
+					throw new Report.Error(uniType, "Union component cannot be of type void");
+				compTypes.add(type);
+			}
+			if(compTypes.size() == 0)
+				throw new Report.Error(uniType, "Union must have at least one component");
+			return SemAn.isType.put(uniType, new TYP.StrType(compTypes));
+		}
 		return null;
 	}
 
@@ -134,7 +128,7 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 			return SemAn.isType.put(nameType, new TYP.NameType(nameType.name));
 		}
 		if(mode == Mode.RESOLVE){
-			AST.Node typeDefn = (SemAn.defAt.get(nameType));
+			AST.TypDefn typeDefn = (AST.TypDefn) SemAn.defAt.get(nameType);
 
 			if(typeDefn instanceof AST.TypDefn){
 				TYP.Type type = SemAn.isType.get(typeDefn);
@@ -181,15 +175,14 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 	
 	@Override
 	public TYP.Type visit(AST.TypDefn typDefn, Mode mode) {
-		if(mode == Mode.DECLARE){
+		if(mode == Mode.DECLARE)
 			SemAn.isType.put(typDefn, new TYP.NameType(typDefn.name));
-		}
-		if(mode == Mode.RESOLVE){
-			TYP.Type t = typDefn.type.accept(this, mode);
-			TYP.Type type = SemAn.isType.get(typDefn);
-			if(!(type instanceof TYP.NameType))
-				throw new Report.Error(typDefn, "Couldnt resolve: " + typDefn.name);
-			((TYP.NameType)type).setActType(t);
+		else if (mode == Mode.RESOLVE) {
+			TYP.Type resolvedType = typDefn.type.accept(this, mode);
+			TYP.Type defnType = SemAn.isType.get(typDefn);
+			if(!(defnType instanceof TYP.NameType))
+				throw new Report.Error(typDefn, "Type definition is not a name type");
+			((TYP.NameType) defnType).setActType(resolvedType);
 		}
 		return null;
 		
@@ -198,51 +191,52 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 	@Override
 	public TYP.Type visit(AST.VarDefn varDefn, Mode mode) {
 		varDefn.type.accept(this, mode);
-		if(mode==Mode.RESOLVE){
-			TYP.Type a = SemAn.isType.get(varDefn.type);
-			return SemAn.ofType.put(varDefn, a);
-		}
+		if (mode == Mode.RESOLVE)
+			SemAn.ofType.put(varDefn, SemAn.isType.get(varDefn.type));
 		return null;
 	}
 
 	@Override
 	public TYP.Type visit(AST.DefFunDefn defFunDefn, Mode mode) {
-		defFunDefn.pars.accept(this, mode);
-		if(mode == Mode.DECLARE){
-		}
-		if (mode == Mode.RESOLVE){
+		for (AST.ParDefn parDefn : defFunDefn.pars)
+			parDefn.accept(this, mode);
+		if (mode == Mode.RESOLVE) {
+			ArrayList<TYP.Type> parTypes = new ArrayList<TYP.Type>();
+			for (AST.ParDefn parDefn : defFunDefn.pars)
+				parTypes.add(SemAn.isType.get(parDefn));
+			SemAn.ofType.put(defFunDefn, new TYP.FunType(parTypes, defFunDefn.type.accept(this, mode)));
 			defFunDefn.stmts.accept(this, mode);
-			TYP.Type a = (defFunDefn.type).accept(this, mode);
-			return SemAn.ofType.put(defFunDefn, a);
 		}
 		return null;
 	}
 
 	@Override
 	public TYP.Type visit(AST.ExtFunDefn extFunDefn, Mode mode) {
-		extFunDefn.pars.accept(this, mode);
-		if(mode == Mode.DECLARE){
-		}
-		if (mode == Mode.RESOLVE){
-			return SemAn.ofType.put(extFunDefn, (extFunDefn.type).accept(this, mode));
+		for (AST.ParDefn parDefn : extFunDefn.pars)
+			parDefn.accept(this, mode);
+		if (mode == Mode.RESOLVE) {
+			ArrayList<TYP.Type> parTypes = new ArrayList<TYP.Type>();
+			for (AST.ParDefn parDefn : extFunDefn.pars)
+				parTypes.add(SemAn.isType.get(parDefn));
+			SemAn.ofType.put(extFunDefn, new TYP.FunType(parTypes, extFunDefn.type.accept(this, mode)));
 		}
 		return null;
 	}
 
 	@Override
 	public TYP.Type visit(AST.ParDefn parDefn, Mode mode) {
+		// NE SME BIT VOID
 		parDefn.type.accept(this, mode);
-		if(mode==Mode.RESOLVE){
-			TYP.Type a = SemAn.isType.get(parDefn.type);
-			return SemAn.ofType.put(parDefn, a);
-		}
+		if (mode == Mode.RESOLVE)
+			return SemAn.ofType.put(parDefn, SemAn.isType.get(parDefn.type));
 		return null;
 	}
 
 	@Override
 	public TYP.Type visit(AST.CompDefn compDefn, Mode mode) {
-		if(mode==Mode.RESOLVE){
+		if (mode == Mode.RESOLVE) {
 			return SemAn.ofType.put(compDefn, compDefn.type.accept(this, mode));
+			// potencialno return SemAn.ofType.put(compDefn, SemAn.isType.get(compDefn.type));
 		}
 		return null;
 	}
@@ -251,7 +245,6 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 	@Override
 	public TYP.Type visit(AST.ArrExpr arrExpr, Mode mode) {
-
 		return null;
 	}
 

@@ -64,7 +64,7 @@ typ unionSteviloArrIntPtrArrArrInt = { comp1: stevilo, comp2: arrInt, comp3: ptr
 typ funIntToInt = (int) : int
 typ funSteviloarrPtrIntToVoid = (stevilo, ptrInt) : void
 typ funSteviloPtrPtrPtrIntToVoid = (stevilo, ptrPtrIntIndirect) : void
-typ funFunIntToArrArrIntToFunLogicnaToPtrUnionChar = ((int) : ^[1][1]int) : (logicna): ^{comp1: char}
+#typ funFunIntToArrArrIntToFunLogicnaToPtrUnionChar = ((int) : ^[1][1]int) : (logicna): ^{comp1: char}
 
 # typ funVoidParameter = (void) : void #ERR8: Void parameter
 # typ funStructParameter = (< comp1: int >) : void #ERR9: Struct parameter
@@ -90,59 +90,59 @@ var varFunIntToInt : funIntToInt
 
 
 ####    FUNCTION DEFINITION & STATEMENT    ####
-# fun funAllGood(par1: int, par2: ptrInt, par3: ptrInt) : int =
-#     varInt = 1,
-#     par1 = varInt,
-#     varInt = par1,
-#     par2 = par3,
-#     varArrLogicna[0] = true,
-#     varStructIntChar.comp1 = 1,
-#     varStructMultiLevel.comp1.comp1 = 2,
-#     varStructMultiLevel.comp1.comp2.comp2 = 'a',
-# 
-#     return 1,
-#     return varInt,
-#     return par1,
-#     return varPtrInt^,
-#     return sizeof ptrInt,
-#     return sizeof structRecursive2Ptr,
-# 
-#     while true do ^par1 = ^15 end,
-#     while varLogicna do ^par1 = ^-1 end,
-# 
-#     if !varLogicna then varInt = +2 end,
-#     if true & varLogicna then varInt = +2 end,
-#     if varLogicna | false then varInt = -2 end,
-#     if 'a' == 'b' then varInt = varInt * 2 end,
-#     if varInt != 10 then varInt = varInt / varInt end,
-#     if 10 != varInt then varInt = varInt % varInt end,
-#     if varStructIntChar.comp1 > 10 then varInt = varInt + varInt end,
-#     if varFunIntToInt(10) <= varInt then varInt = varInt - varInt end,
-# 
-#     return {varFunIntToInt : int}
-# 
-# 
-# fun funAllBad(par1: int, par2: ptrInt, par3: ptrInt) : int =
-#     # varInt = true, #ERR16: Non-coercible types assignment
-#     # par2 = ^15, #ERR17: Non-coercible types assignment
-# 
-#     # return 'a', #ERR18: Non-coercible function result and return types
-#     # return par2, #ERR19: Non-coercible function result and return types
-# 
-#     # while 1 do return 1 end, #ERR20: Non-boolean expression as condition
-# 
-#     # return +varLogicna, #ERR21: Non-integer expression with prefix +
-#     # return -varLogicna, #ERR22: Non-integer expression with prefix -
-#     # return !varInt, #ERR23: Non-boolean expression with prefix !
-#     # return varInt & varLogicna, #ERR24: Non-boolean expression in binary expression &
-# 
-#     return 1
-# 
-# fun main() : int =
-#     let
-#         var var1: int
-#     in
-#         var1 = 1,
-#         return 1
-#     end
-# 
+ fun funAllGood(par1: int, par2: ptrInt, par3: ptrInt) : int =
+     varInt = 1,
+     par1 = varInt,
+     varInt = par1,
+     par2 = par3,
+     varArrLogicna[0] = true,
+     varStructIntChar.comp1 = 1,
+     varStructMultiLevel.comp1.comp1 = 2,
+     varStructMultiLevel.comp1.comp2.comp2 = 'a',
+ 
+     return 1,
+     return varInt,
+     return par1,
+     return varPtrInt^,
+     return sizeof ptrInt,
+     return sizeof structRecursive2Ptr,
+ 
+     while true do ^par1 = ^15 end,
+     while varLogicna do ^par1 = ^-1 end,
+ 
+     if !varLogicna then varInt = +2 end,
+     if true & varLogicna then varInt = +2 end,
+     if varLogicna | false then varInt = -2 end,
+     if 'a' == 'b' then varInt = varInt * 2 end,
+     if varInt != 10 then varInt = varInt / varInt end,
+     if 10 != varInt then varInt = varInt % varInt end,
+     if varStructIntChar.comp1 > 10 then varInt = varInt + varInt end,
+     if varFunIntToInt(10) <= varInt then varInt = varInt - varInt end,
+ 
+     return {varFunIntToInt : int}
+ 
+ 
+ fun funAllBad(par1: int, par2: ptrInt, par3: ptrInt) : int =
+     # varInt = true, #ERR16: Non-coercible types assignment
+     # par2 = ^15, #ERR17: Non-coercible types assignment
+ 
+     # return 'a', #ERR18: Non-coercible function result and return types
+     # return par2, #ERR19: Non-coercible function result and return types
+ 
+     # while 1 do return 1 end, #ERR20: Non-boolean expression as condition
+ 
+     # return +varLogicna, #ERR21: Non-integer expression with prefix +
+     # return -varLogicna, #ERR22: Non-integer expression with prefix -
+     # return !varInt, #ERR23: Non-boolean expression with prefix !
+     # return varInt & varLogicna, #ERR24: Non-boolean expression in binary expression &
+ 
+     return 1
+ 
+ fun main() : int =
+     let
+         var var1: int
+     in
+         var1 = 1,
+         return 1
+     end
+ 
