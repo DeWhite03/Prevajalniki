@@ -236,7 +236,6 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 	public TYP.Type visit(AST.CompDefn compDefn, Mode mode) {
 		if (mode == Mode.RESOLVE) {
 			return SemAn.ofType.put(compDefn, compDefn.type.accept(this, mode));
-			// potencialno return SemAn.ofType.put(compDefn, SemAn.isType.get(compDefn.type));
 		}
 		return null;
 	}
@@ -245,13 +244,21 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 	@Override
 	public TYP.Type visit(AST.ArrExpr arrExpr, Mode mode) {
+		TYP.Type indexType = arrExpr.idx.accept(this, mode);
+		TYP.Type arrType = arrExpr.arrExpr.accept(this, mode);
+		if(mode == Mode.RESOLVE){
+			if(!(indexType instanceof TYP.IntType))
+				throw new Report.Error(arrExpr, "Array index must be of type int");
+			if(!(arrType instanceof TYP.ArrType))
+				throw new Report.Error(arrExpr, "Array expression must be of type array");
+			return SemAn.ofType.put(arrExpr, arrType);
+		}
 		return null;
 	}
 
 	@Override
 	public TYP.Type visit(AST.AtomExpr atomExpr, Mode mode) {
-		TYP.Type b = atomExpr.accept(this, mode);
-		return SemAn.isType.put(atomExpr, b);
+		return null;
 	}
 
 	@Override
@@ -261,6 +268,22 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 	@Override
 	public TYP.Type visit(AST.CallExpr callExpr, Mode mode) {
+		ArrayList<TYP.Type> parTypes = new ArrayList<TYP.Type>();
+		TYP.Type funType = callExpr.funExpr.accept(this, mode);
+		for (AST.Expr arg : callExpr.argExprs)
+			parTypes.add(arg.accept(this, mode));
+		if (mode == Mode.RESOLVE) {
+			if(!(funType instanceof TYP.FunType))
+				throw new Report.Error(callExpr, "Function expression must be of type function");
+			if(parTypes.size() != ((TYP.FunType) funType).parTypes.size())
+				throw new Report.Error(callExpr, "Function call has wrong number of arguments");
+			// for (int i = 0; i < parTypes.size(); i++) {
+			// 	if(!parTypes.get(i).matches(((TYP.FunType) funType).parTypes.get(i)))
+			// 		throw new Report.Error(callExpr, "Function call has wrong argument type");
+			// }
+			return SemAn.ofType.put(callExpr, ((TYP.FunType) funType).resType);
+			
+		}
 		return null;
 	}
 
