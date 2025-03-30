@@ -1,0 +1,2 @@
+typ d = < o : ^b>
+typ b = < o : ^d>
