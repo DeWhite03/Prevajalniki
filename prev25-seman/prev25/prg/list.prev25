@@ -1,4 +1,4 @@
-typ elem = void
+typ elem = int
 typ llist = < x : ^elem , rem: ^llist >
 
 fun add(l : ^llist, val : int) : ^llist =

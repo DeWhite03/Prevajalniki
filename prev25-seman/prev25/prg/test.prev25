@@ -141,7 +141,7 @@ fun funAllBad(par1: int, par2: ptrInt, par3: ptrInt) : int =
 
     return 1
 
-fun main() : void =
+fun main() : int =
     let
         var var1: int
     in

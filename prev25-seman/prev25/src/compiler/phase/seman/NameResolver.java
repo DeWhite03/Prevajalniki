@@ -5,6 +5,8 @@ import java.util.*;
 import compiler.common.report.*;
 import compiler.phase.abstr.*;
 import compiler.phase.abstr.AST.*;
+import compiler.phase.abstr.AST.Node;
+import compiler.phase.abstr.AST.Nodes;
 
 /**
  * Name resolver.
@@ -48,18 +50,15 @@ public class NameResolver implements AST.FullVisitor<Object, NameResolver.Mode> 
 
 	@Override
 	public Object visit(Nodes<? extends Node> nodes, Mode mode) {
+		// Report.info("NameResolver");
 		for (final Node node : nodes) {
 			if ((node != null) || (!compiler.Compiler.devMode())) {
-				// Report.info("======== node declare mode started ========");
 				node.accept(this, Mode.DECLARE);
-				// Report.info("======== node declare mode done ========");
 			}
 		}
 		for (final Node node : nodes) {
 			if ((node != null) || (!compiler.Compiler.devMode())) {
-				// Report.info("======== node resolve mode started ========");
 				node.accept(this, Mode.RESOLVE);
-				// Report.info("======== node resolve mode done ========");
 			}
 		}
 		return null;

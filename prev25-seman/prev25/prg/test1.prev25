@@ -1,4 +1,5 @@
 var s : < a:int, b:char>
+var a : int
 fun fx() : int = 
-    s.a = 1
+    a = 1
     

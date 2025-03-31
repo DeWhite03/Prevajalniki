@@ -21,9 +21,11 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 	}
 	
 	private final HashSet<TYP.NameType> visited = new HashSet<TYP.NameType>();
-	static public final HashMap<TYP.RecType, AST.RecType> recDef = new HashMap<TYP.RecType, AST.RecType>(); 
+	static public final HashMap<TYP.RecType, AST.RecType> recDef = new HashMap<TYP.RecType, AST.RecType>();
+
 	@Override
 	public TYP.Type visit(Nodes<? extends AST.Node> nodes, Mode mode) {
+		// Report.info("TypeResolver");
 		for (final AST.Node node : nodes){
 			node.accept(this, Mode.DECLARE);
 
@@ -31,44 +33,43 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 		for (final AST.Node node : nodes) {
 			node.accept(this, Mode.RESOLVE);
 		}
-		// boolean hasMainFunction = false;
-		// for (final Node node : nodes) {
-		// 	if (node instanceof DefFunDefn funDefn) {
-		// 		var funType = SemAn.isType.get(funDefn.type);
-		// 		if (funDefn.name.equals("main") && funType instanceof TYP.IntType) {
-		// 			hasMainFunction = true;
-		// 			break;
-		// 		}
-		// 	}
-		// 	}
-		
-		// 	if (!hasMainFunction) {
-		// 	throw new Report.Error(nodes, "File does not contain main function");
-		// }
 		return null;
 	}
 
 	@Override
 	public TYP.Type visit(AST.AtomType atomType, Mode mode) {
 		if(mode == Mode.RESOLVE){
+			var isConst = false;
+			var isAddr = false;
 			TYP.Type type;
-			switch(atomType.type){
+			switch (atomType.type) {
 				case CHAR:
 					type = TYP.CharType.type;
+					isConst = true;
+					isAddr = false;
 					break;
 				case BOOL:
 					type = TYP.BoolType.type;
+					isConst = true;
+					isAddr = false;
 					break;
 				case INT:
 					type = TYP.IntType.type;
+					isConst = true;
+					isAddr = false;
 					break;
 				case VOID:
 					type = TYP.VoidType.type;
+					isConst = true;
+					isAddr = false;
 					break;
 				default:
+					Report.warning(atomType, "Atom type " + atomType.toString() + " was set to null ");
 					type = null;
 					break;
 			}
+			// SemAn.isConst.put(atomType, isConst);
+			// SemAn.isAddr.put(atomType, isAddr);
 			return SemAn.isType.put(atomType, type);
 		}
 		return null;
@@ -93,7 +94,7 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 	@Override
 	public TYP.Type visit(AST.PtrType ptrType, Mode mode) {
-		Report.info(ptrType, "Pointer type: " + ptrType);
+		// Report.info(ptrType, "Pointer type: " + ptrType);
 		if (mode == Mode.RESOLVE) {
 			TYP.Type baseType = ptrType.baseType.accept(this, mode);
 			// if (baseType instanceof TYP.NameType)
@@ -121,6 +122,8 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 				throw new Report.Error(strType, "Struct must have at least one component");
 			TYP.RecType type =  new TYP.StrType(strTypes);
 			recDef.put(type, strType);
+			SemAn.isAddr.put(strType, true);
+			SemAn.isConst.put(strType, false);
 			return SemAn.isType.put(strType, type);
 		}
 		return null;
@@ -128,19 +131,22 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 	@Override
 	public TYP.Type visit(AST.UniType uniType, Mode mode) {
-		if (mode == Mode.DECLARE)
-			SemAn.isType.put(uniType, new TYP.UniType(null));
 		if (mode == Mode.RESOLVE) {
-			ArrayList<TYP.Type> compTypes = new ArrayList<TYP.Type>();
+			ArrayList<TYP.Type> uniTypes = new ArrayList<TYP.Type>();
 			for (AST.CompDefn comp : uniType.comps) {
 				TYP.Type type = comp.accept(this, mode);
-				if(type instanceof TYP.VoidType)
-					throw new Report.Error(uniType, "Union component cannot be of type void");
-				compTypes.add(type);
+				if (type instanceof TYP.VoidType)
+					throw new Report.Error(uniType, "Struct component cannot be of type void");
+				uniTypes.add(type);
 			}
-			if(compTypes.size() == 0)
-				throw new Report.Error(uniType, "Union must have at least one component");
-			return SemAn.isType.put(uniType, new TYP.UniType(compTypes));
+			
+			if(uniTypes.size() == 0)
+				throw new Report.Error(uniType, "Struct must have at least one component");
+			TYP.RecType type =  new TYP.StrType(uniTypes);
+			recDef.put(type, uniType);
+			SemAn.isAddr.put(uniType, true);
+			SemAn.isConst.put(uniType, false);
+			return SemAn.isType.put(uniType, type);
 		}
 		return null;
 	}
@@ -224,16 +230,30 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 		return null;
 	}
 
+
 	@Override
 	public TYP.Type visit(AST.DefFunDefn defFunDefn, Mode mode) {
 		for (AST.ParDefn parDefn : defFunDefn.pars)
 			parDefn.accept(this, mode);
 		if (mode == Mode.RESOLVE) {
-			ArrayList<TYP.Type> parTypes = new ArrayList<TYP.Type>();
-			for (AST.ParDefn parDefn : defFunDefn.pars)
-				parTypes.add(SemAn.ofType.get(parDefn));
-			SemAn.ofType.put(defFunDefn, new TYP.FunType(parTypes, defFunDefn.type.accept(this, mode)));
-			defFunDefn.stmts.accept(this, mode);
+				ArrayList<TYP.Type> parTypes = new ArrayList<TYP.Type>();
+				for (AST.ParDefn parDefn : defFunDefn.pars)
+					parTypes.add(SemAn.ofType.get(parDefn));
+					var funType = defFunDefn.type.accept(this, mode);
+					if (defFunDefn.name.equals("main")) {
+						Report.info(defFunDefn, "Main function found");
+						Report.info(defFunDefn, "Main function type: " + funType);
+						if (defFunDefn.pars.size() != 0)
+							throw new Report.Error(defFunDefn, "Main function must not have parameters");
+						if (funType != TYP.IntType.type)
+							throw new Report.Error(defFunDefn, "Main function must return int");
+						TypeChecker.isMainDefined = true;
+						Report.info(defFunDefn, "Main function is defined");
+					}
+					SemAn.isAddr.put(defFunDefn, true);
+					SemAn.isConst.put(defFunDefn, false);
+				SemAn.ofType.put(defFunDefn, new TYP.FunType(parTypes, funType));
+				defFunDefn.stmts.accept(this, mode);
 		}
 		return null;
 	}
@@ -245,8 +265,13 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 		TYP.Type resType = extFunDefn.pars.accept(this, mode);
 		if (mode == Mode.RESOLVE) {
 			ArrayList<TYP.Type> parTypes = new ArrayList<TYP.Type>();
-			for (AST.ParDefn parDefn : extFunDefn.pars)
+			for (AST.ParDefn parDefn : extFunDefn.pars) {
+				SemAn.isAddr.put(parDefn, true);
+				SemAn.isConst.put(parDefn, false);
 				parTypes.add(SemAn.ofType.get(parDefn));
+			}
+			SemAn.isAddr.put(extFunDefn, false);
+			SemAn.isConst.put(extFunDefn, false);
 			SemAn.ofType.put(extFunDefn, new TYP.FunType(parTypes, extFunDefn.type.accept(this, mode)));
 		}
 		return null;
