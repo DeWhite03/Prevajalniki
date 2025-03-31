@@ -1,4 +1,7 @@
 ####    TYPE DEFINITION    ####
+
+var crkaPredTipom : crka
+
 ##  BASE TYPE  ##
 typ stevilo = int
 typ crka = char
@@ -46,8 +49,8 @@ typ structSteviloArrIntPtrArrArrInt = < comp1: stevilo, comp2: arrInt, comp3: pt
 typ structMultiLevel = < comp1: < comp1: int, comp2: < comp1: int, comp2: char > >, comp2: char >
 typ structRecursive1Ptr = < comp1: ^structRecursive2Ptr >
 typ structRecursive2Ptr = < comp1: ^structRecursive1Ptr >
-#typ structRecursive1NoPtr = < comp1: structRecursive2NoPtr > TODO
-#typ structRecursive2NoPtr = < comp1: structRecursive1NoPtr > TODO
+typ structRecursive1NoPtr = < comp1: structRecursive2NoPtr > #TODO
+typ structRecursive2NoPtr = < comp1: structRecursive1NoPtr > #TODO
 
 # typ structVoid = < comp1: void > #ERR6: Void component
 

@@ -1,2 +1,4 @@
-typ d = < o : ^b>
-typ b = < o : ^d>
+var s : < a:int, b:char>
+fun fx() : int = 
+    s.a = 1
+    

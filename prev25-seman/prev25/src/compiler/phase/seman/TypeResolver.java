@@ -21,7 +21,7 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 	}
 	
 	private final HashSet<TYP.NameType> visited = new HashSet<TYP.NameType>();
-
+	static public final HashMap<TYP.RecType, AST.RecType> recDef = new HashMap<TYP.RecType, AST.RecType>(); 
 	@Override
 	public TYP.Type visit(Nodes<? extends AST.Node> nodes, Mode mode) {
 		for (final AST.Node node : nodes){
@@ -45,7 +45,7 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 		// 	if (!hasMainFunction) {
 		// 	throw new Report.Error(nodes, "File does not contain main function");
 		// }
-		// return null;
+		return null;
 	}
 
 	@Override
@@ -108,19 +108,20 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 	@Override
 	public TYP.Type visit(AST.StrType strType, Mode mode) {
-		if(mode == Mode.DECLARE)
-			SemAn.isType.put(strType, new TYP.StrType(null));
 		if (mode == Mode.RESOLVE) {
 			ArrayList<TYP.Type> strTypes = new ArrayList<TYP.Type>();
 			for (AST.CompDefn comp : strType.comps) {
 				TYP.Type type = comp.accept(this, mode);
-				if(type instanceof TYP.VoidType)
+				if (type instanceof TYP.VoidType)
 					throw new Report.Error(strType, "Struct component cannot be of type void");
 				strTypes.add(type);
 			}
+			
 			if(strTypes.size() == 0)
 				throw new Report.Error(strType, "Struct must have at least one component");
-			return SemAn.isType.put(strType, new TYP.StrType(strTypes));
+			TYP.RecType type =  new TYP.StrType(strTypes);
+			recDef.put(type, strType);
+			return SemAn.isType.put(strType, type);
 		}
 		return null;
 	}
@@ -205,6 +206,7 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 			if(!(defnType instanceof TYP.NameType))
 				throw new Report.Error(typDefn, "Type definition is not a name type");
 			((TYP.NameType) defnType).setActType(resolvedType);
+			return SemAn.isType.put(typDefn, defnType);
 		}
 		return null;
 		
@@ -267,13 +269,4 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 		return null;
 	}
 
-	@Override
-	public TYP.Type visit(AST.AssignStmt assignStmt, Mode mode) {
-		return null;
-	}
-
-	@Override
-	public TYP.Type visit(AST.ReturnStmt returnStmt, Mode mode) {
-		return null;
-	}
 }

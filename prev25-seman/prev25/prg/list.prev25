@@ -1,0 +1,43 @@
+typ elem = void
+typ llist = < x : ^elem , rem: ^llist >
+
+fun add(l : ^llist, val : int) : ^llist =
+    let
+	var new : llist
+    in
+	new.x = { val : ^elem } ,
+	new.rem = null ,
+	if l == null then
+	 return ^new  
+	else
+	 l^.rem = ^new ,
+	 return l
+	end 
+    end ,
+    return null
+
+fun remove(l : ^llist) : ^llist =
+    let
+	var cur : ^llist
+	var prev : ^llist
+    in
+	cur = l ,
+	prev = null ,
+	while cur^.rem != null do
+	 prev = cur ,
+	 cur = cur^.rem
+	end ,
+	prev^.rem = null
+    end ,
+    return l
+
+fun map(l : ^llist, f : (^elem) : ^elem) : void =
+    if l == null then
+     return 0
+    else
+     l^.x = f(l^.x) ,
+     map(l^.rem, f)
+    end
+
+fun main() : int =
+    return 0
