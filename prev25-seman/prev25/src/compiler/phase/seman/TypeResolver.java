@@ -25,7 +25,7 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 	@Override
 	public TYP.Type visit(Nodes<? extends AST.Node> nodes, Mode mode) {
-		// Report.info("TypeResolver");
+		// // Report.info("TypeResolver");
 		for (final AST.Node node : nodes){
 			node.accept(this, Mode.DECLARE);
 
@@ -94,11 +94,11 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 	@Override
 	public TYP.Type visit(AST.PtrType ptrType, Mode mode) {
-		// Report.info(ptrType, "Pointer type: " + ptrType);
+		// // Report.info(ptrType, "Pointer type: " + ptrType);
 		if (mode == Mode.RESOLVE) {
 			TYP.Type baseType = ptrType.baseType.accept(this, mode);
 			// if (baseType instanceof TYP.NameType)
-			// 	{Report.info(ptrType, "Pointer base type: " + ((TYP.NameType) baseType).name);
+			// 	{// Report.info(ptrType, "Pointer base type: " + ((TYP.NameType) baseType).name);
 			// 	baseType = ((TYP.NameType) baseType).actualType();}
 			if(baseType instanceof TYP.VoidType)
 				throw new Report.Error(ptrType, "Pointer cannot be of type void");
@@ -122,8 +122,8 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 				throw new Report.Error(strType, "Struct must have at least one component");
 			TYP.RecType type =  new TYP.StrType(strTypes);
 			recDef.put(type, strType);
-			SemAn.isAddr.put(strType, true);
-			SemAn.isConst.put(strType, false);
+			// SemAn.isAddr.put(strType, true);
+			// SemAn.isConst.put(strType, false);
 			return SemAn.isType.put(strType, type);
 		}
 		return null;
@@ -144,8 +144,8 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 				throw new Report.Error(uniType, "Struct must have at least one component");
 			TYP.RecType type =  new TYP.StrType(uniTypes);
 			recDef.put(type, uniType);
-			SemAn.isAddr.put(uniType, true);
-			SemAn.isConst.put(uniType, false);
+			// SemAn.isAddr.put(uniType, true);
+			// SemAn.isConst.put(uniType, false);
 			return SemAn.isType.put(uniType, type);
 		}
 		return null;
@@ -241,17 +241,17 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 					parTypes.add(SemAn.ofType.get(parDefn));
 					var funType = defFunDefn.type.accept(this, mode);
 					if (defFunDefn.name.equals("main")) {
-						Report.info(defFunDefn, "Main function found");
-						Report.info(defFunDefn, "Main function type: " + funType);
+						// Report.info(defFunDefn, "Main function found");
+						// Report.info(defFunDefn, "Main function type: " + funType);
 						if (defFunDefn.pars.size() != 0)
 							throw new Report.Error(defFunDefn, "Main function must not have parameters");
 						if (funType != TYP.IntType.type)
 							throw new Report.Error(defFunDefn, "Main function must return int");
 						TypeChecker.isMainDefined = true;
-						Report.info(defFunDefn, "Main function is defined");
+						// Report.info(defFunDefn, "Main function is defined");
 					}
-					SemAn.isAddr.put(defFunDefn, true);
-					SemAn.isConst.put(defFunDefn, false);
+					// SemAn.isAddr.put(defFunDefn, true);
+					// SemAn.isConst.put(defFunDefn, false);
 				SemAn.ofType.put(defFunDefn, new TYP.FunType(parTypes, funType));
 				defFunDefn.stmts.accept(this, mode);
 		}
