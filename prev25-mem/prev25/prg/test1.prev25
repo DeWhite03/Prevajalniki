@@ -1,0 +1,4 @@
+typ A = < b : B >
+typ B = < a : A >
+
+fun main() : int = return 0

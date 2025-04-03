@@ -266,12 +266,12 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 		if (mode == Mode.RESOLVE) {
 			ArrayList<TYP.Type> parTypes = new ArrayList<TYP.Type>();
 			for (AST.ParDefn parDefn : extFunDefn.pars) {
-				SemAn.isAddr.put(parDefn, true);
-				SemAn.isConst.put(parDefn, false);
+				// SemAn.isAddr.put(parDefn, true);
+				// SemAn.isConst.put(parDefn, false);
 				parTypes.add(SemAn.ofType.get(parDefn));
 			}
-			SemAn.isAddr.put(extFunDefn, false);
-			SemAn.isConst.put(extFunDefn, false);
+			// SemAn.isAddr.put(extFunDefn, false);
+			// SemAn.isConst.put(extFunDefn, false);
 			SemAn.ofType.put(extFunDefn, new TYP.FunType(parTypes, extFunDefn.type.accept(this, mode)));
 		}
 		return null;
