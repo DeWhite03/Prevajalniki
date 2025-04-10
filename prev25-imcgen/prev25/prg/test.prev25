@@ -1,0 +1,13 @@
+var x : int
+var c : char
+var b : bool
+var s : { x : int, c : char }
+
+fun main() : int =
+    x = x + 1,
+    x = -3,
+    # {b == true : bool}, GIVES A STRING true FOR SOME REASON
+    {c : char},
+    {x + 1 : int},
+    s.x = 1,
+    return x
