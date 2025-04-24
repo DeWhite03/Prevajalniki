@@ -19,14 +19,14 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 	/** Constructs a new name resolver. */
 	public TypeResolver() {
 	}
-	
+
 	private final HashSet<TYP.NameType> visited = new HashSet<TYP.NameType>();
 	static public final HashMap<TYP.RecType, AST.RecType> recDef = new HashMap<TYP.RecType, AST.RecType>();
 
 	@Override
 	public TYP.Type visit(Nodes<? extends AST.Node> nodes, Mode mode) {
 		// // Report.info("TypeResolver");
-		for (final AST.Node node : nodes){
+		for (final AST.Node node : nodes) {
 			node.accept(this, Mode.DECLARE);
 
 		}
@@ -38,7 +38,7 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 	@Override
 	public TYP.Type visit(AST.AtomType atomType, Mode mode) {
-		if(mode == Mode.RESOLVE){
+		if (mode == Mode.RESOLVE) {
 			var isConst = false;
 			var isAddr = false;
 			TYP.Type type;
@@ -83,7 +83,7 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 			if (numElems <= 0)
 				throw new Report.Error(arrType, "Array size must be greater than 0");
 			// if(baseType instanceof TYP.NameType)
-			// 	baseType = ((TYP.NameType) baseType).actualType();
+			// baseType = ((TYP.NameType) baseType).actualType();
 			if (baseType instanceof TYP.VoidType)
 				throw new Report.Error(arrType, "Array cannot be of type void");
 			return SemAn.isType.put(arrType, new TYP.ArrType(baseType, numElems));
@@ -91,63 +91,119 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 		return null;
 	}
 
-
 	@Override
 	public TYP.Type visit(AST.PtrType ptrType, Mode mode) {
 		// // Report.info(ptrType, "Pointer type: " + ptrType);
 		if (mode == Mode.RESOLVE) {
 			TYP.Type baseType = ptrType.baseType.accept(this, mode);
 			// if (baseType instanceof TYP.NameType)
-			// 	{// Report.info(ptrType, "Pointer base type: " + ((TYP.NameType) baseType).name);
-			// 	baseType = ((TYP.NameType) baseType).actualType();}
-			if(baseType instanceof TYP.VoidType)
+			// {// Report.info(ptrType, "Pointer base type: " + ((TYP.NameType)
+			// baseType).name);
+			// baseType = ((TYP.NameType) baseType).actualType();}
+			if (baseType instanceof TYP.VoidType)
 				throw new Report.Error(ptrType, "Pointer cannot be of type void");
 			return SemAn.isType.put(ptrType, new TYP.PtrType(baseType));
 		}
 		return null;
 	}
 
+	// @Override
+	// public TYP.Type visit(AST.StrType strType, Mode mode) {
+	// if (mode == Mode.RESOLVE) {
+	// ArrayList<TYP.Type> strTypes = new ArrayList<TYP.Type>();
+	// for (AST.CompDefn comp : strType.comps) {
+	// TYP.Type type = comp.accept(this, mode);
+	// if (type instanceof TYP.VoidType)
+	// throw new Report.Error(strType, "Struct component cannot be of type void");
+	// strTypes.add(type);
+	// }
+
+	// if(strTypes.size() == 0)
+	// throw new Report.Error(strType, "Struct must have at least one component");
+	// TYP.RecType type = new TYP.StrType(strTypes);
+	// recDef.put(type, strType);
+	// // SemAn.isAddr.put(strType, true);
+	// // SemAn.isConst.put(strType, false);
+	// return SemAn.isType.put(strType, type);
+	// }
+	// return null;
+	// }
+
 	@Override
 	public TYP.Type visit(AST.StrType strType, Mode mode) {
+		if (mode == Mode.DECLARE) {
+			TYP.Type typ = new TYP.StrType(null);
+			return SemAn.isType.put(strType, typ);
+		}
 		if (mode == Mode.RESOLVE) {
-			ArrayList<TYP.Type> strTypes = new ArrayList<TYP.Type>();
-			for (AST.CompDefn comp : strType.comps) {
-				TYP.Type type = comp.accept(this, mode);
-				if (type instanceof TYP.VoidType)
-					throw new Report.Error(strType, "Struct component cannot be of type void");
-				strTypes.add(type);
+			LinkedList<TYP.Type> typelist = new LinkedList<TYP.Type>();
+			LinkedList<String> names = new LinkedList<String>();
+			LinkedList<AST.Node> comps = new LinkedList<AST.Node>();
+			for (Node comp : strType.comps) {
+				TYP.Type compType = comp.accept(this, mode);
+				AST.CompDefn compDefn = (AST.CompDefn) comp;
+				comps.addLast(compDefn);
+				if (compType instanceof TYP.VoidType) {
+					throw new Report.Error(strType, "Components cannot compTypee void");
+				}
+				names.addLast(compDefn.name);
+				typelist.addLast(compType);
 			}
-			
-			if(strTypes.size() == 0)
-				throw new Report.Error(strType, "Struct must have at least one component");
-			TYP.RecType type =  new TYP.StrType(strTypes);
-			recDef.put(type, strType);
-			// SemAn.isAddr.put(strType, true);
-			// SemAn.isConst.put(strType, false);
-			return SemAn.isType.put(strType, type);
+			var typ = new TYP.StrType(typelist);
+			typ.names = names;
+			typ.componentNodes = comps;
+			return SemAn.isType.put(strType, typ);
 		}
 		return null;
 	}
 
+	// @Override
+	// public TYP.Type visit(AST.UniType uniType, Mode mode) {
+	// 	if (mode == Mode.RESOLVE) {
+	// 		ArrayList<TYP.Type> uniTypes = new ArrayList<TYP.Type>();
+	// 		for (AST.CompDefn comp : uniType.comps) {
+	// 			TYP.Type type = comp.accept(this, mode);
+	// 			if (type instanceof TYP.VoidType)
+	// 				throw new Report.Error(uniType, "Struct component cannot be of type void");
+	// 			uniTypes.add(type);
+	// 		}
+
+	// 		if (uniTypes.size() == 0)
+	// 			throw new Report.Error(uniType, "Struct must have at least one component");
+	// 		TYP.RecType type = new TYP.UniType(uniTypes);
+	// 		recDef.put(type, uniType);
+	// 		// SemAn.isAddr.put(uniType, true);
+	// 		// SemAn.isConst.put(uniType, false);
+	// 		return SemAn.isType.put(uniType, type);
+	// 	}
+	// 	return null;
+	// }
+
 	@Override
 	public TYP.Type visit(AST.UniType uniType, Mode mode) {
-		if (mode == Mode.RESOLVE) {
-			ArrayList<TYP.Type> uniTypes = new ArrayList<TYP.Type>();
-			for (AST.CompDefn comp : uniType.comps) {
-				TYP.Type type = comp.accept(this, mode);
-				if (type instanceof TYP.VoidType)
-					throw new Report.Error(uniType, "Struct component cannot be of type void");
-				uniTypes.add(type);
-			}
-			
-			if(uniTypes.size() == 0)
-				throw new Report.Error(uniType, "Struct must have at least one component");
-			TYP.RecType type =  new TYP.UniType(uniTypes);
-			recDef.put(type, uniType);
-			// SemAn.isAddr.put(uniType, true);
-			// SemAn.isConst.put(uniType, false);
-			return SemAn.isType.put(uniType, type);
-		}
+		if(mode == Mode.DECLARE){
+            TYP.Type typ =  new TYP.UniType(null);
+            return SemAn.isType.put(uniType, typ);
+        } else if (mode == Mode.RESOLVE){
+			LinkedList<TYP.Type> typelist = new LinkedList<TYP.Type>();
+			LinkedList<String> names = new LinkedList<String>();
+			LinkedList<AST.Node> componentsNodes = new LinkedList<AST.Node>();
+
+            for (Node comp : uniType.comps) {
+                TYP.Type compType = comp.accept(this, mode);
+				AST.CompDefn compDefn = (AST.CompDefn)comp;
+				if(compType instanceof TYP.VoidType){
+					throw new Report.Error(uniType, "Components cannot be void");
+				}
+				componentsNodes.addLast(compDefn);
+				names.addLast(compDefn.name);
+                typelist.addLast(compType);
+            }
+			var typ = new TYP.UniType(typelist);
+			typ.names = names;
+			typ.componentNodes = componentsNodes;
+			return SemAn.isType.put(uniType, typ);
+        }
 		return null;
 	}
 
@@ -158,8 +214,8 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 		}
 		if (mode == Mode.RESOLVE) {
 			AST.TypDefn typeDefn = (AST.TypDefn) SemAn.defAt.get(nameType);
-			
-			if(typeDefn instanceof AST.TypDefn){
+
+			if (typeDefn instanceof AST.TypDefn) {
 				TYP.Type type = SemAn.isType.get(typeDefn);
 				return SemAn.isType.put(nameType, type);
 			}
@@ -171,28 +227,28 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 	@Override
 	public TYP.Type visit(AST.FunType funType, Mode mode) {
-		if(mode == Mode.RESOLVE){
+		if (mode == Mode.RESOLVE) {
 			ArrayList<TYP.Type> parTypes = new ArrayList<TYP.Type>();
 			TYP.Type resType = funType.resType.accept(this, mode);
-			
-			for(Node parType : funType.parTypes){
+
+			for (Node parType : funType.parTypes) {
 				TYP.Type parType2 = parType.accept(this, mode);
-				if(parType2 instanceof TYP.VoidType){
+				if (parType2 instanceof TYP.VoidType) {
 					throw new Report.Error(funType, "Paramater was of type void");
-				}else if(parType2 instanceof TYP.UniType){
+				} else if (parType2 instanceof TYP.UniType) {
 					throw new Report.Error(funType, "Paramater was of type union");
-				}else if(parType2 instanceof TYP.StrType){
+				} else if (parType2 instanceof TYP.StrType) {
 					throw new Report.Error(funType, "Paramater was of type struct");
-				}else if(parType2 instanceof TYP.ArrType){
+				} else if (parType2 instanceof TYP.ArrType) {
 					throw new Report.Error(funType, "Paramater was of type array");
 				}
 				parTypes.add(parType2);
 			}
-			if(resType instanceof TYP.UniType){
+			if (resType instanceof TYP.UniType) {
 				throw new Report.Error(funType, "Return was of type union");
-			}else if(resType instanceof TYP.StrType){
+			} else if (resType instanceof TYP.StrType) {
 				throw new Report.Error(funType, "Return was of type struct");
-			}else if(resType instanceof TYP.ArrType){
+			} else if (resType instanceof TYP.ArrType) {
 				throw new Report.Error(funType, "Return was of type array");
 			}
 			return SemAn.isType.put(funType, new TYP.FunType(parTypes, resType));
@@ -201,22 +257,22 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 	}
 
 	// ----------- DEFINITIONS -----------
-	
+
 	@Override
 	public TYP.Type visit(AST.TypDefn typDefn, Mode mode) {
-		if(mode == Mode.DECLARE)
+		if (mode == Mode.DECLARE)
 			SemAn.isType.put(typDefn, new TYP.NameType(typDefn.name));
 		else if (mode == Mode.RESOLVE) {
 			TYP.Type resolvedType = typDefn.type.accept(this, mode);
 			TYP.Type defnType = SemAn.isType.get(typDefn);
-			if(!(defnType instanceof TYP.NameType))
+			if (!(defnType instanceof TYP.NameType))
 				throw new Report.Error(typDefn, "Type definition is not a name type");
 			((TYP.NameType) defnType).setActType(resolvedType);
 			return SemAn.isType.put(typDefn, defnType);
 		}
 		return null;
-		
-	} 
+
+	}
 
 	@Override
 	public TYP.Type visit(AST.VarDefn varDefn, Mode mode) {
@@ -230,30 +286,29 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 		return null;
 	}
 
-
 	@Override
 	public TYP.Type visit(AST.DefFunDefn defFunDefn, Mode mode) {
 		for (AST.ParDefn parDefn : defFunDefn.pars)
 			parDefn.accept(this, mode);
 		if (mode == Mode.RESOLVE) {
-				ArrayList<TYP.Type> parTypes = new ArrayList<TYP.Type>();
-				for (AST.ParDefn parDefn : defFunDefn.pars)
-					parTypes.add(SemAn.ofType.get(parDefn));
-					var funType = defFunDefn.type.accept(this, mode);
-					if (defFunDefn.name.equals("main")) {
-						// Report.info(defFunDefn, "Main function found");
-						// Report.info(defFunDefn, "Main function type: " + funType);
-						if (defFunDefn.pars.size() != 0)
-							throw new Report.Error(defFunDefn, "Main function must not have parameters");
-						if (funType != TYP.IntType.type)
-							throw new Report.Error(defFunDefn, "Main function must return int");
-						TypeChecker.isMainDefined = true;
-						// Report.info(defFunDefn, "Main function is defined");
-					}
-					// SemAn.isAddr.put(defFunDefn, true);
-					// SemAn.isConst.put(defFunDefn, false);
-				SemAn.ofType.put(defFunDefn, new TYP.FunType(parTypes, funType));
-				defFunDefn.stmts.accept(this, mode);
+			ArrayList<TYP.Type> parTypes = new ArrayList<TYP.Type>();
+			for (AST.ParDefn parDefn : defFunDefn.pars)
+				parTypes.add(SemAn.ofType.get(parDefn));
+			var funType = defFunDefn.type.accept(this, mode);
+			if (defFunDefn.name.equals("main")) {
+				// Report.info(defFunDefn, "Main function found");
+				// Report.info(defFunDefn, "Main function type: " + funType);
+				if (defFunDefn.pars.size() != 0)
+					throw new Report.Error(defFunDefn, "Main function must not have parameters");
+				if (funType != TYP.IntType.type)
+					throw new Report.Error(defFunDefn, "Main function must return int");
+				TypeChecker.isMainDefined = true;
+				// Report.info(defFunDefn, "Main function is defined");
+			}
+			// SemAn.isAddr.put(defFunDefn, true);
+			// SemAn.isConst.put(defFunDefn, false);
+			SemAn.ofType.put(defFunDefn, new TYP.FunType(parTypes, funType));
+			defFunDefn.stmts.accept(this, mode);
 		}
 		return null;
 	}

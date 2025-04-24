@@ -121,7 +121,7 @@ public class MemEvaluator implements AST.FullVisitor<Object, Tracker> {
         tracker.isInFunctionParam = false;
         tracker.offset = curOffset;
         tracker.size = oldSize;
-        return null;
+        return label;
     }
 
     @Override

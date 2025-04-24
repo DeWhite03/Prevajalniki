@@ -1,0 +1,11 @@
+var b : bool
+fun main() : int =
+    '\0x08',
+    '\'',
+    '\\',
+    if true then
+        1 + 1
+    else 
+        1 - 1
+    end,
+    return 1

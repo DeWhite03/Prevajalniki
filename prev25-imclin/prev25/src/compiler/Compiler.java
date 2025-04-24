@@ -153,7 +153,6 @@ public class Compiler {
 
 			// Carry out the compilation phase by phase.
 			while (true) {
-
 				if (cmdLineOptValues.get("--target-phase").equals("none"))
 					break;
 
@@ -219,7 +218,7 @@ public class Compiler {
 				if (cmdLineOptValues.get("--target-phase").equals("imcgen"))
 					break;
 
-				// Linearization of intermediate code.
+				// // Linearization of intermediate code.
 				// try (ImcLin imclin = new ImcLin()) {
 				// 	Abstr.tree.accept(new ChunkGenerator(), null);
 				// 	imclin.log();

@@ -60,18 +60,14 @@ public class ImcGen extends Phase {
 			case AST.Expr expr -> {
 				IMC.Expr exprImc = ImcGen.expr.get(expr);
 				if (expr != null) {
-					Report.info(node, "expr a");
 					exprImc.log(logger);
-					Report.info(node, "expr b");
 				}
 				break;
 			}
 			case AST.Stmt stmt -> {
 				IMC.Stmt stmtImc = ImcGen.stmt.get(stmt);
 				if (stmt != null) {
-					Report.info(node, "stmt a");
 					stmtImc.log(logger);
-					Report.info(node, "stmt b");
 				}
 				break;
 			}

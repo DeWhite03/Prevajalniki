@@ -47,52 +47,52 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
         return null;
     }
 
-    // @Override
-    // public IMC.Expr visit(ParDefn parDefn, ImcTracker arg) {
-    // if ((parDefn.type != null) || (!compiler.Compiler.devMode()))
-    // parDefn.type.accept(this, arg);
-    // return null;
-    // }
-
-    // @Override
-    // public IMC.Expr visit(CompDefn compDefn, ImcTracker arg) {
-    // if ((compDefn.type != null) || (!compiler.Compiler.devMode()))
-    // compDefn.type.accept(this, arg);
-    // return null;
-    // }
-
     // // ----- Statements -----
 
-    // @Override
-    // public IMC.Expr visit(LetStmt letStmt, ImcTracker arg) {
-    // if ((letStmt.defns != null) || (!compiler.Compiler.devMode()))
-    // letStmt.defns.accept(this, arg);
-    // if ((letStmt.stmts != null) || (!compiler.Compiler.devMode()))
-    // letStmt.stmts.accept(this, arg);
-    // return null;
-    // }
+    @Override
+    public IMC.Stmt visit(LetStmt letStmt, ImcTracker arg) {
+        for (var defn : letStmt.defns) {
+            defn.accept(this, arg);
+        }
+        Vector<IMC.Stmt> letIMC = new Vector<IMC.Stmt>();
+        for (var stmt : letStmt.stmts) {
+            letIMC.addLast((IMC.Stmt) stmt.accept(this, arg));
+        }
+        return ImcGen.stmt.put(letStmt, new IMC.STMTS(letIMC));
+    }
 
     @Override
     public IMC.Stmt visit(AssignStmt assignStmt, ImcTracker arg) {
-        return ImcGen.stmt.put(assignStmt, new IMC.MOVE((IMC.Expr) assignStmt.dstExpr.accept(this, arg),
-                (IMC.Expr) assignStmt.srcExpr.accept(this, arg)));
+        return ImcGen.stmt.put(assignStmt,
+                new IMC.MOVE(
+                        (IMC.Expr) assignStmt.dstExpr.accept(this, arg),
+                        (IMC.Expr) assignStmt.srcExpr.accept(this, arg)));
     }
 
     @Override
     public IMC.Stmt visit(AST.ExprStmt exprStmt, ImcTracker arg) {
-        return ImcGen.stmt.put(exprStmt, new IMC.ESTMT((IMC.Expr)exprStmt.expr.accept(this, arg)));
+        return ImcGen.stmt.put(exprStmt, new IMC.ESTMT((IMC.Expr) exprStmt.expr.accept(this, arg)));
     }
 
-    // @Override
-    // public IMC.Stmt visit(IfThenStmt ifThenStmt, ImcTracker arg) {
-    //     ifThenStmt.condExpr.accept(this, arg);
-    //     ifThenStmt.thenStmt.accept(this, arg);
-    //     IMC.Stmt ifThenElseStmt = new IMC.STMTS(new Vector<IMC.Stmt>());
-    //     ifThenElseStmt.add(new IMC.JUMP(new IMC.NAME(ifThenStmt.thenStmt.label)));
-    //     return ImcGen.stmt.put(ifThenStmt, new IMC.CJUMP((IMC.Expr)
-    //     ifThenStmt.condExpr.accept(this, arg), new IMC.LABEL(new MEM.Label()), new
-    //     IMC.LABEL(new MEM.Label())));
-    // }
+    @Override
+    public IMC.Stmt visit(IfThenStmt ifThenStmt, ImcTracker arg) {
+        var lblIf = new MEM.Label();
+        var lblEnd = new MEM.Label();
+        var ifThenIMC = new Vector<IMC.Stmt>();
+        var ifIMC = new Vector<IMC.Stmt>();
+        ifThenIMC.add(new IMC.CJUMP((IMC.Expr) ifThenStmt.condExpr.accept(this, arg), new IMC.NAME(lblIf),
+                new IMC.NAME(lblEnd)));
+        ifThenIMC.add(new IMC.LABEL(lblIf));
+        for (var ifStmt : ifThenStmt.thenStmt) {
+            IMC.Stmt t = (IMC.Stmt) ifStmt.accept(this, arg);
+            ifIMC.addLast(t);
+        }
+        ifThenIMC.add(new IMC.STMTS(ifIMC));
+        ifThenIMC.add(new IMC.JUMP(new IMC.NAME(lblEnd)));
+        ifThenIMC.add(new IMC.LABEL(lblEnd));
+
+        return ImcGen.stmt.put(ifThenStmt, new IMC.STMTS(ifThenIMC));
+    }
 
     @Override
     public IMC.Stmt visit(IfThenElseStmt ifThenElseStmt, ImcTracker arg) {
@@ -102,56 +102,24 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
         var ifThenElseIMC = new Vector<IMC.Stmt>();
         var ifIMC = new Vector<IMC.Stmt>();
         var elseIMC = new Vector<IMC.Stmt>();
-        Report.info("1");
-        // IMC.Expr condExpr = (IMC.Expr) ifThenElseStmt.condExpr.accept(this, arg);
-        
-        ifThenElseIMC.add(new IMC.CJUMP((IMC.Expr) ifThenElseStmt.condExpr.accept(this, arg), new IMC.NAME(lblIf), new IMC.NAME(lblElse)));
+        ifThenElseIMC.add(new IMC.CJUMP((IMC.Expr) ifThenElseStmt.condExpr.accept(this, arg), new IMC.NAME(lblIf),
+                new IMC.NAME(lblElse)));
         ifThenElseIMC.add(new IMC.LABEL(lblIf));
-        Report.info("2");
-
-        // ifThenElseStmt.thenStmt.forEach(stmt -> {
-        //     ifIMC.add((IMC.Stmt) stmt.accept(this, arg));
-        // });
-
-        for (var n : ifThenElseStmt.thenStmt){
-            IMC.Stmt t =(IMC.Stmt) n.accept(this, arg);
+        for (var ifStmt : ifThenElseStmt.thenStmt) {
+            IMC.Stmt t = (IMC.Stmt) ifStmt.accept(this, arg);
             ifIMC.addLast(t);
         }
-        ifThenElseIMC.add(new IMC.STMTS(elseIMC));
-        Report.info("3");
-
-
+        ifThenElseIMC.add(new IMC.STMTS(ifIMC));
         ifThenElseIMC.add(new IMC.JUMP(new IMC.NAME(lblEnd)));
         ifThenElseIMC.add(new IMC.LABEL(lblElse));
-        
-        // ifThenElseStmt.elseStmt.forEach(stmt -> {
-        //     elseIMC.add((IMC.Stmt) stmt.accept(this, arg));
-        // });
-        for (var n : ifThenElseStmt.elseStmt){
-            IMC.Stmt t =(IMC.Stmt) n.accept(this, arg);
+        for (var n : ifThenElseStmt.elseStmt) {
+            IMC.Stmt t = (IMC.Stmt) n.accept(this, arg);
             elseIMC.addLast(t);
         }
-        Report.info("5");
-        ifThenElseIMC.add(new IMC.ESTMT((IMC.Expr) ifThenElseStmt.elseStmt.accept(this, arg)));
+        ifThenElseIMC.add(new IMC.STMTS(elseIMC));
         ifThenElseIMC.add(new IMC.JUMP(new IMC.NAME(lblEnd)));
+        ifThenElseIMC.add(new IMC.LABEL(lblEnd));
 
-        // var a = new IMC.STMTS(ifThenElseIMC);
-
-        Report.info("6");
-        if (ifThenElseIMC == null) {
-            Report.info("ifThenElseIMC");
-        }
-        if (ifIMC == null) {
-            Report.info("ifIMC");
-        }
-        if (elseIMC == null) {
-            Report.info("elseIMC");
-        }
-        ifThenElseIMC.forEach(a -> {
-            if (a == null) {
-                Report.info("WADAHEL");
-            }
-        } );
         return ImcGen.stmt.put(ifThenElseStmt, new IMC.STMTS(ifThenElseIMC));
     }
 
@@ -162,65 +130,30 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
         var stmts = new Vector<IMC.Stmt>();
         stmts.add(new IMC.MOVE(new IMC.TEMP(frame.RV), (IMC.Expr) returnStmt.retExpr.accept(this, arg)));
         stmts.add(new IMC.JUMP(new IMC.NAME(epilog)));
-
         return ImcGen.stmt.put(returnStmt, new IMC.STMTS(stmts));
     }
 
-    // @Override
-    // public IMC.Expr visit(WhileStmt whileStmt, ImcTracker arg) {
-    //     whileStmt.condExpr.accept(this, arg);
-
-    //     return null;
-    // }
-
-    // // ----- Types -----
-
-    // @Override
-    // public IMC.Expr visit(AtomType atomType, ImcTracker arg) {
-    // return null;
-    // }
-
-    // @Override
-    // public IMC.Expr visit(ArrType arrType, ImcTracker arg) {
-    // if ((arrType.elemType != null) || (!compiler.Compiler.devMode()))
-    // arrType.elemType.accept(this, arg);
-    // return null;
-    // }
-
-    // @Override
-    // public IMC.Expr visit(PtrType ptrType, ImcTracker arg) {
-    // if ((ptrType.baseType != null) || (!compiler.Compiler.devMode()))
-    // ptrType.baseType.accept(this, arg);
-    // return null;
-    // }
-
-    // @Override
-    // public IMC.Expr visit(StrType strType, ImcTracker arg) {
-    // if ((strType.comps != null) || (!compiler.Compiler.devMode()))
-    // strType.comps.accept(this, arg);
-    // return null;
-    // }
-
-    // @Override
-    // public IMC.Expr visit(UniType uniType, ImcTracker arg) {
-    // if ((uniType.comps != null) || (!compiler.Compiler.devMode()))
-    // uniType.comps.accept(this, arg);
-    // return null;
-    // }
-
-    // @Override
-    // public IMC.Expr visit(FunType funType, ImcTracker arg) {
-    // if ((funType.parTypes != null) || (!compiler.Compiler.devMode()))
-    // funType.parTypes.accept(this, arg);
-    // if ((funType.resType != null) || (!compiler.Compiler.devMode()))
-    // funType.resType.accept(this, arg);
-    // return null;
-    // }
-
-    // @Override
-    // public IMC.Expr visit(NameType nameType, ImcTracker arg) {
-    // return null;
-    // }
+    @Override
+    public IMC.Stmt visit(WhileStmt whileStmt, ImcTracker arg) {
+        var conditionLbl = new MEM.Label();
+        var whileLbl = new MEM.Label();
+        var endLbl = new MEM.Label();
+        var whileIMC = new Vector<IMC.Stmt>();
+        var loopIMC = new Vector<IMC.Stmt>();
+        whileIMC.add(new IMC.LABEL(conditionLbl));
+        whileIMC.add(new IMC.CJUMP(
+                (IMC.Expr) whileStmt.condExpr.accept(this, arg),
+                new IMC.NAME(whileLbl),
+                new IMC.NAME(endLbl)));
+        whileIMC.add(new IMC.LABEL(whileLbl));
+        for (var stmt : whileStmt.stmts) {
+            loopIMC.addLast((IMC.Stmt) stmt.accept(this, arg));
+        }
+        whileIMC.add(new IMC.STMTS(loopIMC));
+        whileIMC.add(new IMC.JUMP(new IMC.NAME(conditionLbl)));
+        whileIMC.add(new IMC.LABEL(endLbl));
+        return ImcGen.stmt.put(whileStmt, new IMC.STMTS(whileIMC));
+    }
 
     // ----- Expressions -----
 
@@ -244,9 +177,45 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
                                 new IMC.CONST(idSize)))));
     }
 
+    public static int stringToChar(String s) {
+        s = s.substring(1, s.length() - 1);
+        if (s.length() == 1) {
+            return s.charAt(0);
+        }
+        if (s.startsWith("\\'")) {
+            return '\'';
+        }
+        if (s.startsWith("\\\\")) {
+            return '\\';
+        }
+        return Integer.parseInt(s.replace("\\0x", ""), 16);
+    }
+
     @Override
-    public IMC.Expr visit(AtomExpr atomExpr, ImcTracker arg) {
-        return ImcGen.expr.put(atomExpr, new IMC.CONST(Long.valueOf(atomExpr.value)));
+    public IMC.Expr visit(AST.AtomExpr atomExpr, ImcTracker arg) {
+        IMC.CONST value = null;
+        switch (atomExpr.type) {
+            case INT:
+                value = new IMC.CONST(Long.valueOf(atomExpr.value));
+                break;
+            case BOOL:
+                if (atomExpr.value.equals("true"))
+                    value = new IMC.CONST(1);
+                else
+                    value = new IMC.CONST(0);
+                break;
+            case CHAR:
+                value = new IMC.CONST(stringToChar(atomExpr.value));
+                break;
+            case PTR:
+                value = new IMC.CONST(0);
+                break;
+            default:
+                throw new Report.Error("Unsupported type");
+        }
+        arg.lastExpr = value;
+
+        return ImcGen.expr.put(atomExpr, value);
     }
 
     @Override
@@ -299,14 +268,22 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
                 (IMC.Expr) binExpr.sndExpr.accept(this, arg)));
     }
 
-    // @Override
-    // public IMC.Expr visit(CallExpr callExpr, ImcTracker arg) {
-         
-    //     return ImcGen.expr.put(callExpr, new IMC.CALL(
-    //         callExpr.funExpr.accept(this, arg),
-                
-    //     ));
-    // }
+    public static long exprSize(AST.Expr expr) {
+        var type = SemAn.ofType.get(expr);
+        return type.accept(MemEvaluator.sizeEval, null);
+    }
+
+    @Override
+    public IMC.Expr visit(CallExpr callExpr, ImcTracker arg) {
+        var expr = (IMC.Expr) callExpr.funExpr.accept(this, arg);
+        Vector<IMC.Expr> argsIMC = new Vector<IMC.Expr>();
+        Vector<Long> argOffsets = new Vector<Long>();
+        for (var argExpr : callExpr.argExprs) {
+            argsIMC.addLast((IMC.Expr) argExpr.accept(this, arg));
+            argOffsets.addLast(exprSize(callExpr));
+        }
+        return ImcGen.expr.put(callExpr, new IMC.CALL(expr, argOffsets, argsIMC));
+    }
 
     @Override
     public IMC.Expr visit(CastExpr castExpr, ImcTracker arg) {
@@ -322,13 +299,33 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
         }
     }
 
+    public static long compOffset(AST.CompExpr compExpr, ImcTracker arg) {
+        TYP.RecType b = (TYP.RecType)SemAn.ofType.get(compExpr.recExpr).actualType();
+        //var x = Memory.accesses.get(compExpr);
+        /*for (AST.CompDefn x : b.compTypes.name){
+            
+        }*/
+        int i = 0;
+        for(; i<b.names.size(); i++){
+            if(b.names.get(i).equals(compExpr.name)){
+                break;
+            }
+        }
+        if(i>=b.names.size()){
+            throw new Report.Error(compExpr,"Could not get node of component");
+        }
+        var nodeOfComponent = (AST.CompDefn)b.componentNodes.get(i);
+        long FUCK = ((MEM.RelAccess)Memory.accesses.get(nodeOfComponent)).offset;
+        
+        return FUCK;
+    }
+
     @Override
     public IMC.Expr visit(CompExpr compExpr, ImcTracker arg) {
-        var arrSize = SemAn.ofType.get(compExpr).accept(sizeEval, null);
         IMC.Expr compExprIMC = (IMC.Expr) compExpr.recExpr.accept(this, arg);
         IMC.Expr arrAddr = null;
         // TODO: treba narest da dobi velikost offseta
-        long idSize = 0; 
+        long idSize = compOffset(compExpr, arg);
         if (compExprIMC instanceof IMC.MEM8 a) {
             arrAddr = a.addr;
         } else if (compExprIMC instanceof IMC.MEM1 a) {
@@ -336,9 +333,8 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
         }
 
         return ImcGen.expr.put(compExpr, new IMC.MEM8(
-            new IMC.BINOP(IMC.BINOP.Oper.ADD, arrAddr,
-                    new IMC.CONST(idSize))
-        ));
+                new IMC.BINOP(IMC.BINOP.Oper.ADD, arrAddr,
+                        new IMC.CONST(idSize))));
     }
 
     @Override

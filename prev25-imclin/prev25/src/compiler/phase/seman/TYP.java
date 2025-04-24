@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.function.*;
 
 import compiler.common.report.*;
+import compiler.phase.abstr.AST;
 
 /**
  * Internal representation of types.
@@ -404,6 +405,9 @@ public class TYP {
 		/** Types of components. */
 		public final Types<Type> compTypes;
 
+		public LinkedList<AST.Node> componentNodes;
+		/** The names of components. */
+		public LinkedList<String> names;
 		/**
 		 * Constructs a new record type.
 		 * 
@@ -411,6 +415,8 @@ public class TYP {
 		 */
 		public RecType(final List<Type> compTypes) {
 			this.compTypes = new Types<Type>(compTypes);
+			this.names = new LinkedList<String>();
+			this.componentNodes = new LinkedList<AST.Node>();
 		}
 
 	}
