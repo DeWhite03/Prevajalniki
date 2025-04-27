@@ -28,7 +28,6 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 		// // Report.info("TypeResolver");
 		for (final AST.Node node : nodes) {
 			node.accept(this, Mode.DECLARE);
-
 		}
 		for (final AST.Node node : nodes) {
 			node.accept(this, Mode.RESOLVE);
@@ -131,10 +130,6 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 	@Override
 	public TYP.Type visit(AST.StrType strType, Mode mode) {
-		if (mode == Mode.DECLARE) {
-			TYP.Type typ = new TYP.StrType(null);
-			return SemAn.isType.put(strType, typ);
-		}
 		if (mode == Mode.RESOLVE) {
 			LinkedList<TYP.Type> typelist = new LinkedList<TYP.Type>();
 			LinkedList<String> names = new LinkedList<String>();
@@ -181,10 +176,7 @@ public class TypeResolver implements AST.FullVisitor<TYP.Type, Mode> {
 
 	@Override
 	public TYP.Type visit(AST.UniType uniType, Mode mode) {
-		if(mode == Mode.DECLARE){
-            TYP.Type typ =  new TYP.UniType(null);
-            return SemAn.isType.put(uniType, typ);
-        } else if (mode == Mode.RESOLVE){
+		if (mode == Mode.RESOLVE){
 			LinkedList<TYP.Type> typelist = new LinkedList<TYP.Type>();
 			LinkedList<String> names = new LinkedList<String>();
 			LinkedList<AST.Node> componentsNodes = new LinkedList<AST.Node>();

@@ -210,6 +210,7 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
             case PTR:
                 value = new IMC.CONST(0);
                 break;
+            
             default:
                 throw new Report.Error("Unsupported type");
         }
@@ -302,9 +303,7 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
     public static long compOffset(AST.CompExpr compExpr, ImcTracker arg) {
         TYP.RecType b = (TYP.RecType)SemAn.ofType.get(compExpr.recExpr).actualType();
         //var x = Memory.accesses.get(compExpr);
-        /*for (AST.CompDefn x : b.compTypes.name){
-            
-        }*/
+        /*for (AST.CompDefn x : b.compTypes.name){}*/
         int i = 0;
         for(; i<b.names.size(); i++){
             if(b.names.get(i).equals(compExpr.name)){
