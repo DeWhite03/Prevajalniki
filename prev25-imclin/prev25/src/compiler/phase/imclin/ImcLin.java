@@ -1,6 +1,8 @@
 package compiler.phase.imclin;
 
 import java.util.*;
+
+import compiler.common.report.Report;
 import compiler.phase.*;
 import compiler.phase.abstr.*;
 import compiler.phase.memory.*;
@@ -120,6 +122,7 @@ public class ImcLin extends Phase {
 			log(codeChunk.frame);
 			for (IMC.Stmt stmt : codeChunk.stmts()) {
 				logger.begElement("stmt");
+				Report.info(stmt.toString());
 				stmt.log(logger);
 				logger.endElement();
 			}

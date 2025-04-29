@@ -477,8 +477,8 @@ public class TypeChecker implements AST.FullVisitor<TYP.Type, Object> {
 	// }
 
 	public static boolean compTypes(TYP.Type a, TYP.Type b) {
-		Report.info("compTypes");
-		Report.info("first arg val:" + a.toString() + " second arg val:" + b.toString());
+		// Report.info("compTypes");
+		// Report.info("first arg val:" + a.toString() + " second arg val:" + b.toString());
 		if (a instanceof TYP.NameType) {
 			a = a.actualType();
 		}

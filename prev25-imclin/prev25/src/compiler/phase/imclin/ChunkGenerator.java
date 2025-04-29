@@ -73,6 +73,7 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
         functionContext.add(new IMC.LABEL(entry));
         functionContext.SL = new IMC.TEMP(frame.FP);
         functionContext.RV = new IMC.TEMP(frame.RV);
+        functionContext.funExit = exit;
         // functionContext.add(new IMC.MOVE(functionContext.RV, new IMC.TEMP(frame.RV)));
         
         defFunDefn.stmts.accept(this, functionContext);
@@ -92,6 +93,7 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
     public IMC.Expr visit(AST.ReturnStmt returnStmt, ChunkTracker arg) {
         var t = returnStmt.retExpr.accept(this, arg);
         arg.add(new IMC.MOVE(arg.RV, t));
+        arg.add(new IMC.JUMP(new IMC.NAME(arg.funExit)));
         return arg.RV;
     }
 
@@ -186,7 +188,7 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
         
         var imc = ImcGen.expr.get(nameExpr);
         var l = new IMC.TEMP(new MEM.Temp());
-        arg.add(new IMC.MOVE(l, new IMC.NAME(new MEM.Label(nameExpr.name))));
+        arg.add(new IMC.MOVE(l, imc));
         nameTempMap.put(nameExpr.name, l);
         return l;
     }

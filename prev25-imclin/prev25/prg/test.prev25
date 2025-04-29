@@ -1,25 +1,15 @@
 var a : int
 fun putchar(c: char): void
 fun putint(n: int): void
-fun puts(s: ^char): void
 
 fun main() : int =
-    puts("Hello World\0x0A"),
-    let var i : int
-    in
-        i = 0,
-        while i < 10 do
-            i = i + 1,
-            putint(i),
-            putchar('\0x0a')
-        end
-    end,
+    puts(10),
     return 0
 
-#fun puts(i : int): void =
-#    if( i == 0) then
-#        putint(5)
-#    else
-#        # putint(i),
-#        puts(10)
-#    end
+fun puts(i : int): void =
+    if( i == 0) then
+        putint(0)
+    else
+        putint(i),
+        puts(i - 1)
+    end
