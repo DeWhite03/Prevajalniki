@@ -271,26 +271,26 @@ public class MemEvaluator implements AST.FullVisitor<Object, Tracker> {
 
     public static String fixString(String s) {
         String newString = "";
-        for (int i = 0; i< s.length(); i++) {
+        for (int i = 0; i < s.length(); i++) {
             if (s.charAt(i) == '\\') {
                 i++;
-                if(s.charAt(i) == '"') {
-                    newString+='"';
-                }
-                else if(s.charAt(i) == '0' && s.charAt(i+1) == 'x')
-                {
+                if (s.charAt(i) == '"') {
+                    newString += '"';
+                } else if (s.charAt(i) == '0' && s.charAt(i + 1) == 'x') {
                     var subs = s.substring(i + 2, i + 4);
                     Report.info(subs);
-                    newString+= (char) Integer.parseInt(subs, 16);
+                    newString += (char) Integer.parseInt(subs, 16);
+                    i += 3;
                 }
-            }
-            else {
+            } else {
                 newString += s.charAt(i);
             }
         }
         Report.info("new string:" + newString);
         return newString;
     }
+    
+
 
     @Override
     public Object visit(AST.AtomExpr atomExpr, Tracker tracker) {
@@ -299,10 +299,10 @@ public class MemEvaluator implements AST.FullVisitor<Object, Tracker> {
                 long size = (long) (atomExpr.value.length());
                 // Report.info("String size: " + size);
                 String str = atomExpr.value.substring(1, atomExpr.value.length() - 1);
-                str = fixString(str);
+                str = fixString(str) + '\0';
                 // Report.info("String value: " + str);
                 var lbl = new MEM.Label();
-                var access = new MEM.AbsAccess(size - 1, lbl, str);
+                var access = new MEM.AbsAccess(str.length(), lbl, str);
                 Memory.strings.put(atomExpr, access);
                 break;
             default:
