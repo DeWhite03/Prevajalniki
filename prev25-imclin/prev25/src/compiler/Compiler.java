@@ -224,20 +224,20 @@ public class Compiler {
 					Abstr.tree.accept(new ChunkGenerator(), null);
 					imclin.log();
 
-					try {
+					// try {
 						if (true) {
 							Interpreter interpreter = new Interpreter(ImcLin.dataChunks(), ImcLin.codeChunks());
 							System.out.println("EXIT CODE: " + interpreter.run("_main"));
 						}
-					}
-					catch (StackOverflowError e) {
-						System.out.println("Stack overflow: " + e.getMessage());
-					}
-					catch (Exception e) {
-						System.out.println("Runtime error: " + e.getMessage());
-					} catch (Report.InternalError e) {
-						System.out.println("Internal error: " + e.getMessage());
-					}
+					// }
+					// catch (StackOverflowError e) {
+					// 	System.out.println("Stack overflow: " + e.getMessage());
+					// }
+					// catch (Exception e) {
+					// 	System.out.println("Runtime error: " + e.getMessage());
+					// } catch (Report.InternalError e) {
+					// 	System.out.println("Internal error: " + e.getMessage());
+					// }
 				}
 				if (cmdLineOptValues.get("--target-phase").equals("imclin"))
 					break;

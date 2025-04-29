@@ -197,18 +197,23 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
     public IMC.Expr visit(AST.AssignStmt assignStmt, ChunkTracker arg) {
         var l = assignStmt.dstExpr.accept(this, arg);
         var r = assignStmt.srcExpr.accept(this, arg);
-        Report.info("l: " +  l.toString());
-        Report.info("r: " +  r.toString());
+        // Report.info("l: " +  l.toString());
+        // Report.info("r: " +  r.toString());
         arg.add(new IMC.MOVE(l, r));
         return l;
     }
 
     public IMC.Expr visit(AST.NameExpr nameExpr, ChunkTracker arg) {
-        if (nameTempMap.containsKey(nameExpr.name)) {   
+        if (nameTempMap.containsKey(nameExpr.name)) {
             return nameTempMap.get(nameExpr.name);
         }
         
         var imc = ImcGen.expr.get(nameExpr);
+        var type = SemAn.ofType.get(nameExpr);
+        if (type instanceof TYP.PtrType) {
+            imc = ((IMC.MEM8) imc).addr;
+        }
+        
         var l = new IMC.TEMP(new MEM.Temp());
         arg.add(new IMC.MOVE(l, imc));
         nameTempMap.put(nameExpr.name, l);
