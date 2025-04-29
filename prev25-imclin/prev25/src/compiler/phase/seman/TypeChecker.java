@@ -232,53 +232,18 @@ public class TypeChecker implements AST.FullVisitor<TYP.Type, Object> {
 		return SemAn.ofType.put(castExpr, castType);
 	}
 
-	// @Override
-	// public TYP.Type visit(AST.CompExpr compExpr, Object obj) {
-	// 	// // Report.info("compExpr");
-	// 	// // Report.info(compExpr, "failed here " + compExpr.name);
-	// 	TYP.Type type = compExpr.recExpr.accept(this, obj);
-	// 	TYP.RecType recType = null;
-
-	// 	try {
-	// 		recType = (TYP.RecType) type.actualType();
-	// 	} catch (ClassCastException e) {
-	// 		throw new Report.Error(compExpr, "Can only acces types of struct and union");
-	// 	}
-
-	// 	AST.RecType def = TypeResolver.recDef.get(recType);
-	// 	// var exprIsAddr = SemAn.isAddr.get(def);
-	// 	var exprIsAddr = true;
-	// 	// if(exprIsAddr == null || !exprIsAddr)
-	// 	if (!exprIsAddr)
-	// 		throw new Report.Error(compExpr, "Record must have an address");
-	// 	TYP.Type compType = null;
-	// 	for (AST.CompDefn compDefn : def.comps) {
-	// 		if (compDefn.name.equals(compExpr.name)) {
-	// 			compType = SemAn.isType.get(compDefn.type);
-	// 			break;
-	// 		}
-
-	// 	}
-
-	// 	if (compType == null)
-	// 		throw new Report.Error(compExpr, "Variable does not contain component called " + compExpr.name);
-	// 	SemAn.isConst.put(compExpr, false);
-	// 	SemAn.isAddr.put(compExpr, true);
-	// 	return SemAn.ofType.put(compExpr, compType);
-	// }
-
 	@Override
 	public TYP.Type visit(AST.CompExpr compExpr, Object obj) {
 		TYP.Type recType = compExpr.recExpr.accept(this, obj).actualType();
-		if(!SemAn.isAddr.get(compExpr.recExpr)){
+		if (!SemAn.isAddr.get(compExpr.recExpr)) {
 			throw new Report.Error(compExpr, "Cannot access component on an expression that doesnt exist");
 		}
-		if(!(recType instanceof TYP.RecType)){
+		if (!(recType instanceof TYP.RecType)) {
 			throw new Report.Error(compExpr, "Cannot access component of non-record type");
 		}
 		TYP.RecType rec = (TYP.RecType) recType;
 		int ind = rec.names.indexOf(compExpr.name);
-		if(ind == -1){
+		if (ind == -1) {
 			throw new Report.Error(compExpr, "Component '" + compExpr.name + "' not found in struct or union.");
 		}
 		TYP.Type compType = rec.compTypes.get(ind);
@@ -303,14 +268,7 @@ public class TypeChecker implements AST.FullVisitor<TYP.Type, Object> {
 
 	@Override
 	public TYP.Type visit(AST.PfxExpr pfxExpr, Object obj) {
-		// // Report.info("pfxExpr");
 		TYP.Type exprType = pfxExpr.subExpr.accept(this, obj).actualType();
-		// // Report.info(pfxExpr, "before instanceof " + exprType.toString());
-		// if (exprType instanceof TYP.NameType)
-		// exprType = ((TYP.NameType) exprType).actualType();
-		// // Report.info(pfxExpr, "after instanceof " + exprType.toString());
-		// if (exprType == TYP.IntType.type || exprType == TYP.BoolType.type || exprType
-		// == TYP.PtrType.type || exprType == TYP.) {
 		var isConst = false;
 		var isAddr = false;
 		var exprIsAddr = SemAn.isAddr.get(pfxExpr.subExpr);
@@ -350,8 +308,6 @@ public class TypeChecker implements AST.FullVisitor<TYP.Type, Object> {
 
 	@Override
 	public TYP.Type visit(AST.SfxExpr sfxExpr, Object obj) {
-		// // // Report.info("sfxExpr");
-		// // Report.info(sfxExpr, "SfxExpr: " + sfxExpr.oper);
 		TYP.Type temp = sfxExpr.subExpr.accept(this, null);
 		var exprIsConst = SemAn.isConst.get(sfxExpr.subExpr);
 		if (exprIsConst == null || exprIsConst)
@@ -388,14 +344,16 @@ public class TypeChecker implements AST.FullVisitor<TYP.Type, Object> {
 		TYP.Type dst = assignStmt.dstExpr.accept(this, obj);
 		TYP.Type src = assignStmt.srcExpr.accept(this, obj);
 
-		if(dst instanceof TYP.FunType){
-			throw new Report.Error(assignStmt, "Left assignment cannot be a function"); 
-		}if(src instanceof TYP.FunType){
-			src = ((TYP.FunType)src).resType;
+		if (dst instanceof TYP.FunType) {
+			throw new Report.Error(assignStmt, "Left assignment cannot be a function");
+		}
+		if (src instanceof TYP.FunType) {
+			src = ((TYP.FunType) src).resType;
 		}
 
-		if(src != null && dst != null){
-			if(!compTypes(dst, src)){
+		if (src != null && dst != null) {
+			if (!compTypes(dst, src)) {
+				Report.info("ASSIGNMENT");
 				throw new Report.Error(assignStmt, "Types do not match");
 			}
 		}
@@ -449,60 +407,60 @@ public class TypeChecker implements AST.FullVisitor<TYP.Type, Object> {
 
 	// @Override
 	// public TYP.Type visit(TypDefn typDefn, Object type) {
-	// 	Report.info(typDefn, "typDefn" + typDefn.name);
-	// 	if (type != null) {
-	// 		Report.info(typDefn, "type: " + type.toString());
-	// 	} else {
-	// 		Report.info(typDefn, "type null");
-	// 	}
-	// 	var t = SemAn.isType.get(typDefn);
-	// 	if (type == null) {
-	// 		typDefn.type.accept(this, t);
-	// 	} else {
-	// 		typDefn.type.accept(this, type);
-	// 	}
-	// 	return null;
+	// Report.info(typDefn, "typDefn" + typDefn.name);
+	// if (type != null) {
+	// Report.info(typDefn, "type: " + type.toString());
+	// } else {
+	// Report.info(typDefn, "type null");
+	// }
+	// var t = SemAn.isType.get(typDefn);
+	// if (type == null) {
+	// typDefn.type.accept(this, t);
+	// } else {
+	// typDefn.type.accept(this, type);
+	// }
+	// return null;
 	// }
 
 	// @Override
 	// public TYP.Type visit(AST.StrType strType, Object object) {
-	// 	strType.comps.accept(this, object);
-	// 	return null;
+	// strType.comps.accept(this, object);
+	// return null;
 	// }
 
 	// @Override
 	// public TYP.Type visit(AST.UniType uniType, Object object) {
-	// 	uniType.comps.accept(this, object);
-	// 	return null;
+	// uniType.comps.accept(this, object);
+	// return null;
 	// }
 
 	// @Override
 	// public TYP.Type visit(AST.CompDefn compDefn, Object object) {
-	// 	compDefn.type.accept(this, object);
-	// 	return null;
+	// compDefn.type.accept(this, object);
+	// return null;
 	// }
 
 	// @Override
 	// public TYP.Type visit(AST.NameType nameType, Object object) {
-	// 	Report.info(nameType, "name Type: " + nameType.name);
-	// 	if (object != null) {
-	// 		Report.info(nameType, object.toString());
-	// 	}
-	// 	else {
-	// 		Report.info(nameType, "object null");
-	// 	}
-	// 	var t = SemAn.isType.get(nameType);
+	// Report.info(nameType, "name Type: " + nameType.name);
+	// if (object != null) {
+	// Report.info(nameType, object.toString());
+	// }
+	// else {
+	// Report.info(nameType, "object null");
+	// }
+	// var t = SemAn.isType.get(nameType);
 
-	// 	if (t == object)
-	// 		throw new Report.Error(nameType, "rec name");
-	// 	nameType.accept(this, object);
-	// 	if (object == null) {
-	// 		nameType.accept(this, t);
-	// 	}
-	// 	else {
-	// 		nameType.accept(this, object);
-	// 	}
-	// 	return null;
+	// if (t == object)
+	// throw new Report.Error(nameType, "rec name");
+	// nameType.accept(this, object);
+	// if (object == null) {
+	// nameType.accept(this, t);
+	// }
+	// else {
+	// nameType.accept(this, object);
+	// }
+	// return null;
 	// }
 
 	// @Override
@@ -518,71 +476,75 @@ public class TypeChecker implements AST.FullVisitor<TYP.Type, Object> {
 	// return SemAn.ofType.put(whileStmt, TYP.BoolType.type);
 	// }
 
-	public static boolean compTypes(TYP.Type a, TYP.Type b){
-
-		if(a instanceof TYP.NameType){
+	public static boolean compTypes(TYP.Type a, TYP.Type b) {
+		Report.info("compTypes");
+		Report.info("first arg val:" + a.toString() + " second arg val:" + b.toString());
+		if (a instanceof TYP.NameType) {
 			a = a.actualType();
 		}
-		if(b instanceof TYP.NameType){
+		if (b instanceof TYP.NameType) {
 			b = b.actualType();
 		}
-		if(a == null || b == null){
+		if (a == null || b == null) {
 			return false;
 		}
-		//Report.info("first arg val:" + a.toString() + " second arg val:" + b.toString());
-		if(a instanceof TYP.RecType a2 && b instanceof TYP.RecType b2){
-			if(a2.toString().equals(b2.toString())){
+		// Report.info("first arg val:" + a.toString() + " second arg val:" +
+		// b.toString());
+		if (a instanceof TYP.RecType a2 && b instanceof TYP.RecType b2) {
+			if (a2.toString().equals(b2.toString())) {
 				return true;
 			}
 			boolean neki = true;
-			if(a2.compTypes.size() != b2.compTypes.size()){
+			if (a2.compTypes.size() != b2.compTypes.size()) {
 				return false;
 			}
-			
-			for(int i = 0; i<a2.compTypes.size(); i++){
+
+			for (int i = 0; i < a2.compTypes.size(); i++) {
 				var prviComp = a2.compTypes.get(i);
 				var drugComp = b2.compTypes.get(i);
-				if(prviComp instanceof TYP.NameType){
+				if (prviComp instanceof TYP.NameType) {
 					prviComp = prviComp.actualType();
 				}
-				if(drugComp instanceof TYP.NameType){
+				if (drugComp instanceof TYP.NameType) {
 					drugComp = drugComp.actualType();
 				}
 
-				if(!compTypes(prviComp, drugComp)){
+				if (!compTypes(prviComp, drugComp)) {
 					neki = false;
 					break;
-				};
-
+				}
+				;
 
 			}
 			return neki;
-		}else if(a instanceof TYP.PtrType a2 && b instanceof TYP.PtrType b2){
-			//Report.info("Hallo, the pointer values are:" +a2.actualType().toString()+ ","+ b2.actualType().toString());
-			if( (b2.baseType.actualType() instanceof TYP.VoidType) && (a2.baseType.actualType() instanceof TYP.VoidType))
+		} else if (a instanceof TYP.PtrType a2 && b instanceof TYP.PtrType b2) {
+			// Report.info("Hallo, the pointer values are:" +a2.actualType().toString()+
+			// ","+ b2.actualType().toString());
+			if ((b2.baseType.actualType() instanceof TYP.VoidType)
+					&& (a2.baseType.actualType() instanceof TYP.VoidType))
 				return true;
-			
-			if((a2.baseType.actualType() instanceof TYP.VoidType)){
+
+			if ((a2.baseType.actualType() instanceof TYP.VoidType)) {
 
 				return false;
 			}
-			if(b2.baseType.actualType() instanceof TYP.VoidType){
+			if (b2.baseType.actualType() instanceof TYP.VoidType) {
 
 				return true;
-				
+
 			}
 			return compTypes(a2.baseType, b2.baseType);
-		}else if(a instanceof TYP.IntType && b instanceof TYP.IntType){
+		} else if (a instanceof TYP.IntType && b instanceof TYP.IntType) {
 			return true;
-		}else if(a instanceof TYP.BoolType && b instanceof TYP.BoolType){
+		} else if (a instanceof TYP.BoolType && b instanceof TYP.BoolType) {
 			return true;
-		}else if(a instanceof TYP.CharType && b instanceof TYP.CharType){
+		} else if (a instanceof TYP.CharType && b instanceof TYP.CharType) {
 			return true;
-		}else if(b instanceof TYP.FunType a2){
+		} else if (b instanceof TYP.FunType a2) {
 			return compTypes(a, a2.resType);
-		}else if(a instanceof TYP.ArrType a2 && b instanceof TYP.ArrType b2){
+		} else if (a instanceof TYP.ArrType a2 && b instanceof TYP.ArrType b2) {
 			return compTypes(a2.elemType, b2.elemType);
-		}else if(a.actualType().equals(b.actualType())){
+		} else if (a.actualType().equals(b.actualType())) {
 			return true;
 		}
 

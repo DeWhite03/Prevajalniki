@@ -20,7 +20,6 @@ import compiler.common.report.*;
  */
 public class MemEvaluator implements AST.FullVisitor<Object, Tracker> {
     public static SizeEvaluator sizeEval = new SizeEvaluator();
-    
 
     @Override
     public TYP.Type visit(Nodes<? extends AST.Node> nodes, Tracker tracker) {
@@ -35,77 +34,94 @@ public class MemEvaluator implements AST.FullVisitor<Object, Tracker> {
     }
 
     @Override
-    public Object visit(VarDefn varDefn, Tracker tracker) {
+    public Object visit(AST.VarDefn varDefn, Tracker tracker) {
         varDefn.type.accept(this, tracker);
-        var varType = SemAn.ofType.get(varDefn);
-        Long size = (Long) varType.accept(sizeEval, tracker);
-        if (size % 8 != 0 && !tracker.isInFunctionParam)
-            size = (size / 8) * 8 + 8;
 
-        long prefix = -1;
-        if (tracker.isInFunctionParam)
-            prefix = 1;
-        
-        if (tracker.depth < 0) {
-            return Memory.accesses.put(varDefn, new MEM.AbsAccess(size, new MEM.Label(varDefn.name)));
+        long size = SemAn.ofType.get(varDefn).accept(sizeEval, null);
+        long correctedOffset = size;
+
+        if (correctedOffset % 8 != 0 && !tracker.isInFunctionParam) {
+            correctedOffset = ((correctedOffset / 8) * 8) + 8;
         }
-        tracker.offset += size * prefix;
-        return Memory.accesses.put(varDefn, new MEM.RelAccess(size, tracker.offset, tracker.depth));
+
+        long prefix = tracker.isInFunctionParam ? 1 : -1;
+
+        if (tracker.depth < 0) {
+            return Memory.accesses.put(
+                    varDefn,
+                    new MEM.AbsAccess(size, new MEM.Label(varDefn.name)));
+        }
+
+        tracker.offset += correctedOffset * prefix;
+
+        return Memory.accesses.put(
+                varDefn,
+                new MEM.RelAccess(size, tracker.offset, tracker.depth));
     }
 
     @Override
     public Object visit(AST.DefFunDefn defFunDefn, Tracker tracker) {
         MEM.Label label;
-        int k = 0;
+        boolean isNewFunction = false;
+    
+        var oldDepth = tracker.depth;
+        var oldOffset = tracker.offset;
+        var oldSize = tracker.size;
+    
+        if (tracker.depth < 0) {
+            tracker.depth = 0;
+        }
+    
         if (tracker.isInFunction) {
             label = new MEM.Label();
         } else {
             tracker.isInFunction = true;
+            isNewFunction = true;
             label = new MEM.Label(defFunDefn.name);
-            k = 1;
-            tracker.depth += 2;
         }
-        // store old tracker state
-        var oldDepth = tracker.depth;
-        var sizeOf = tracker.size;
-        var offsetWhenEntry = tracker.offset;
-
-        // reset tracker
+    
+        var sizeBeforeParams = tracker.size;
         tracker.offset = 0;
-        tracker.changeState();
-        // accept parameters
+        tracker.isInFunctionParam = true;
+        tracker.size = 0;
+    
+        // Process parameters
         defFunDefn.pars.accept(this, tracker);
-
-        // store tracker state
-        var trackerSize = tracker.size;
-
-        // reset tracker
+    
+        tracker.isInFunctionParam = false;
+    
+        if (tracker.size % 8 != 0) {
+            tracker.size = ((tracker.size / 8) * 8) + 8;
+        }
+    
         tracker.offset = 0;
-        tracker.changeState();
-
-        // accept statments
+        tracker.depth++;
+    
+        // Process function body statements
         defFunDefn.stmts.accept(this, tracker);
-
-        tracker.isInFunction = false;
-        var sizeOfFunction = sizeOf - tracker.offset + trackerSize + 2 * 8;
-
-        var frame = new MEM.Frame(
-                label, //Label
-                tracker.depth, //Depth of the function
-                sizeOf - tracker.offset, //Size of local variables
-                trackerSize, //Size of arguments
-                sizeOfFunction //Size of the function
+    
+        long localVarsSize = sizeBeforeParams - tracker.offset;
+        long argsSize = tracker.size;
+        long totalFunctionSize = localVarsSize + argsSize + 2 * 8;
+    
+        MEM.Frame frame = new MEM.Frame(
+            label,
+            tracker.depth - 1,
+            localVarsSize,
+            argsSize,
+            totalFunctionSize
         );
-
-        if (k == 1) {
+    
+        if (isNewFunction) {
             tracker.isInFunction = false;
         }
-
-        tracker.offset = offsetWhenEntry;
+    
+        tracker.offset = oldOffset;
         tracker.depth = oldDepth;
+        tracker.size = oldSize;
+    
         return Memory.frames.put(defFunDefn, frame);
     }
-    
 
     @Override
     public Object visit(AST.ExtFunDefn extFunDefn, Tracker tracker) {
@@ -117,7 +133,7 @@ public class MemEvaluator implements AST.FullVisitor<Object, Tracker> {
         tracker.isInFunctionParam = true;
         tracker.offset = 0;
         extFunDefn.pars.accept(this, tracker);
-        tracker.depth=oldDepth;
+        tracker.depth = oldDepth;
         tracker.isInFunctionParam = false;
         tracker.offset = curOffset;
         tracker.size = oldSize;
@@ -153,23 +169,24 @@ public class MemEvaluator implements AST.FullVisitor<Object, Tracker> {
     }
 
     @Override
-	public TYP.Type visit(AST.StrType strType, Tracker tracker) {
+    public TYP.Type visit(AST.StrType strType, Tracker tracker) {
         var t = tracker.offset;
         strType.comps.accept(this, null);
         tracker.offset = t;
-		return null;
-	}
-	@Override
-	public TYP.Type visit(AST.UniType uniType, Tracker tracker) {
+        return null;
+    }
+
+    @Override
+    public TYP.Type visit(AST.UniType uniType, Tracker tracker) {
         var t = tracker.offset;
-        tracker.offset=0;
-        for(AST.CompDefn comp : uniType.comps){
+        tracker.offset = 0;
+        for (AST.CompDefn comp : uniType.comps) {
             comp.accept(this, tracker);
-            tracker.offset=0;
+            tracker.offset = 0;
         }
         tracker.offset = t;
         return null;
-	}
+    }
 
     @Override
     public Object visit(AST.CompDefn compDefn, Tracker tracker) {
@@ -182,8 +199,7 @@ public class MemEvaluator implements AST.FullVisitor<Object, Tracker> {
         if (compType instanceof TYP.RecType) {
             Tracker t = new Tracker(tracker.depth, size, 0);
             compDefn.type.accept(this, t);
-        }
-        else {
+        } else {
             compDefn.type.accept(this, tracker);
         }
         var access = new MEM.RelAccess(size, tracker.offset, -1);
@@ -195,12 +211,12 @@ public class MemEvaluator implements AST.FullVisitor<Object, Tracker> {
     @Override
     public Object visit(AST.TypDefn typDefn, Tracker tracker) {
         var typType = SemAn.isType.get(typDefn);
-        
+
         long prefix = -1;
         if (tracker.isInFunctionParam) {
             prefix = 1;
         }
-        
+
         if (typType instanceof TYP.RecType) {
             var tempOffset = tracker.offset;
             tracker.offset = 0;
@@ -223,18 +239,18 @@ public class MemEvaluator implements AST.FullVisitor<Object, Tracker> {
             return null;
             //return Memory.accesses.put(typDefn, new MEM.AbsAccess(size, new MEM.Label(typDefn.name)));
         }
-        
+
         typDefn.type.accept(this, tracker);
-        
-        if(tracker.depth >= 0){
+
+        if (tracker.depth >= 0) {
             var size = typType.accept(sizeEval, null);
             // var access = new MEM.RelAccess(-1, tracker.offset+size*prefix, tracker.depth);
-            return new MEM.RelAccess(-1, tracker.offset+size*prefix, tracker.depth);
+            return new MEM.RelAccess(-1, tracker.offset + size * prefix, tracker.depth);
             //Memory.accesses.put(typDefn, access);
             // return null;
         }
         //var size = SemAn.ofType.get(typDefn).accept(sizeEval, null);
-            // var access = new MEM.AbsAccess(-1, new MEM.Label(typDefn.name));
+        // var access = new MEM.AbsAccess(-1, new MEM.Label(typDefn.name));
         return new MEM.AbsAccess(-1, new MEM.Label(typDefn.name));
         //Memory.accesses.put(typDefn, access);
         // return null;
@@ -256,21 +272,17 @@ public class MemEvaluator implements AST.FullVisitor<Object, Tracker> {
     @Override
     public Object visit(AST.AtomExpr atomExpr, Tracker tracker) {
         switch (atomExpr.type) {
-        case STR:
-            long size = (long) (atomExpr.value.length());
-            Report.info("String size: " + size);
-            String str = atomExpr.value;
-            Report.info("String value: " + str);
-            var lbl = new MEM.Label();
-            var access = new MEM.AbsAccess(size-1, lbl, str);
-            // var node = atomExpr;
-            // if (node == null) {
-            //     throw new Report.Error("String node is null");
-            // }
-            Memory.strings.put(atomExpr, access);
-            break;
-        default:
-            break;
+            case STR:
+                long size = (long) (atomExpr.value.length());
+                // Report.info("String size: " + size);
+                String str = atomExpr.value.substring(1, atomExpr.value.length() - 1);
+                // Report.info("String value: " + str);
+                var lbl = new MEM.Label();
+                var access = new MEM.AbsAccess(size - 1, lbl, str);
+                Memory.strings.put(atomExpr, access);
+                break;
+            default:
+                break;
         }
         return null;
     }

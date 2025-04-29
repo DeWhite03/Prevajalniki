@@ -10,6 +10,7 @@ public class ImcTracker {
     public Label l1;
     public Label l2;
     public IMC.Expr lastExpr;
+    public IMC.TEMP staticLink;
 
     public ImcTracker() {
         this.funDefn = null;
@@ -17,5 +18,6 @@ public class ImcTracker {
 
     public ImcTracker(AST.FunDefn funDefn) {
         this.funDefn = funDefn;
+        this.staticLink = null;
     }
 }

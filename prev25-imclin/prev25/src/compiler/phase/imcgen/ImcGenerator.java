@@ -31,19 +31,40 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
     }
 
     // // ----- Definitions -----
-    @Override
-    public IMC.Expr visit(DefFunDefn defFunDefn, ImcTracker arg) {
-        if (arg.depth > 1) {
+    // @Override
+    // public IMC.Expr visit(DefFunDefn defFunDefn, ImcTracker arg) {
+    //     if (arg.depth > 1) {
 
-            ImcGen.entryLabel.put(defFunDefn, new MEM.Label(defFunDefn.name));
-            ImcGen.exitLabel.put(defFunDefn, new MEM.Label());
-        } else {
-            ImcGen.entryLabel.put(defFunDefn, new MEM.Label());
-            ImcGen.exitLabel.put(defFunDefn, new MEM.Label());
-        }
-        arg.depth++;
-        var newArg = new ImcTracker(defFunDefn);
-        defFunDefn.stmts.accept(this, newArg);
+    //         ImcGen.entryLabel.put(defFunDefn, new MEM.Label(defFunDefn.name));
+    //         ImcGen.exitLabel.put(defFunDefn, new MEM.Label());
+    //     } else {
+    //         ImcGen.entryLabel.put(defFunDefn, new MEM.Label());
+    //         ImcGen.exitLabel.put(defFunDefn, new MEM.Label());
+    //     }
+    //     arg.depth++;
+    //     var newArg = new ImcTracker(defFunDefn);
+    //     defFunDefn.stmts.accept(this, newArg);
+    //     return null;
+    // }
+
+    @Override
+    public Object visit(AST.DefFunDefn defFunDefn, ImcTracker arg) {
+        var frame = Memory.frames.get(defFunDefn);
+        var staticLink = new IMC.TEMP(frame.FP);
+    
+        var entryLabel = new MEM.Label();
+        var exitLabel = new MEM.Label();
+    
+        ImcGen.entryLabel.put(defFunDefn, entryLabel);
+        ImcGen.exitLabel.put(defFunDefn, exitLabel);
+    
+        var context = new ImcTracker(defFunDefn);
+        context.l1 = entryLabel;
+        context.l2 = exitLabel;
+        context.staticLink = staticLink;
+    
+        defFunDefn.stmts.accept(this, context);
+    
         return null;
     }
 
@@ -210,7 +231,9 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
             case PTR:
                 value = new IMC.CONST(0);
                 break;
-            
+            case STR:
+                MEM.AbsAccess tmp = Memory.strings.get(atomExpr);
+                return ImcGen.expr.put(atomExpr, new IMC.NAME(tmp.label));
             default:
                 throw new Report.Error("Unsupported type");
         }
@@ -275,17 +298,32 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
     }
 
     @Override
-    public IMC.Expr visit(CallExpr callExpr, ImcTracker arg) {
-        var expr = (IMC.Expr) callExpr.funExpr.accept(this, arg);
-        Vector<IMC.Expr> argsIMC = new Vector<IMC.Expr>();
-        Vector<Long> argOffsets = new Vector<Long>();
-        for (var argExpr : callExpr.argExprs) {
-            argsIMC.addLast((IMC.Expr) argExpr.accept(this, arg));
-            argOffsets.addLast(exprSize(callExpr));
-        }
-        return ImcGen.expr.put(callExpr, new IMC.CALL(expr, argOffsets, argsIMC));
-    }
+    public Object visit(AST.CallExpr callExpr, ImcTracker arg) {
+        var argsExprs = new Vector<IMC.Expr>();
+        var argsSizes = new Vector<Long>();
 
+        var functionExpr = (IMC.Expr) callExpr.funExpr.accept(this, arg);
+        var context = (ImcTracker) arg;
+
+        // Add static link as the first argument
+        argsExprs.add(new IMC.MEM8(context.staticLink));
+        argsSizes.add(8L);
+
+        // Process all argument expressions
+        for (var expr : callExpr.argExprs) {
+            argsExprs.add((IMC.Expr) expr.accept(this, arg));
+            argsSizes.add(exprSize(expr));
+        }
+
+        var call = new IMC.CALL(functionExpr, argsSizes, argsExprs);
+        context.lastExpr = call;
+
+        // Report.info(argsExprs.toString() + " <- arguments");
+        // Report.info(call.toString());
+
+        return ImcGen.expr.put(callExpr, call);
+    }
+    
     @Override
     public IMC.Expr visit(CastExpr castExpr, ImcTracker arg) {
         var castType = SemAn.ofType.get(castExpr);
@@ -336,12 +374,68 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
                         new IMC.CONST(idSize))));
     }
 
-    @Override
-    public IMC.Expr visit(NameExpr nameExpr, ImcTracker arg) {
-        var nameType = SemAn.ofType.get(nameExpr);
-        if (nameType instanceof TYP.BoolType || nameType instanceof TYP.CharType)
-            return ImcGen.expr.put(nameExpr, new IMC.MEM1(new IMC.NAME(new MEM.Label(nameExpr.name))));
-        return ImcGen.expr.put(nameExpr, new IMC.MEM8(new IMC.NAME(new MEM.Label(nameExpr.name))));
+    // @Override
+    // public IMC.Expr visit(NameExpr nameExpr, ImcTracker arg) {
+    //     var nameType = SemAn.ofType.get(nameExpr);
+    //     if (nameType instanceof TYP.BoolType || nameType instanceof TYP.CharType)
+    //         return ImcGen.expr.put(nameExpr, new IMC.MEM1(new IMC.NAME(new MEM.Label(nameExpr.name))));
+    //     return ImcGen.expr.put(nameExpr, new IMC.MEM8(new IMC.NAME(new MEM.Label(nameExpr.name))));
+    // }
+
+    public IMC.Expr visit(AST.NameExpr nameExpr, ImcTracker arg) {
+        var tmp = SemAn.defAt.get(nameExpr);
+        
+        if (tmp instanceof AST.DefFunDefn) {
+            var frame = Memory.frames.get(tmp);
+            var name = new IMC.NAME(frame.label);
+            ((ImcTracker) arg).lastExpr = name;
+            return ImcGen.expr.put(nameExpr, name);
+        } 
+        
+        if (tmp instanceof AST.ExtFunDefn) {
+            var name = new IMC.NAME(new MEM.Label(tmp.name));
+            ((ImcTracker) arg).lastExpr = name;
+            return ImcGen.expr.put(nameExpr, name);
+        }
+    
+        TYP.Type type = SemAn.ofType.get(nameExpr);
+        if (type instanceof TYP.NameType) {
+            type = type.actualType();
+        }
+    
+        if (!(tmp instanceof AST.Node)) {
+            throw new Report.Error("Unexpected semantic definition for NameExpr.");
+        }
+    
+        var nekiNovega = (ImcTracker) arg;
+        var access = Memory.accesses.get(tmp);
+        IMC.Expr expr;
+    
+        if (access instanceof MEM.AbsAccess absAccess) {
+            expr = new IMC.NAME(absAccess.label);
+        } 
+        else if (access instanceof MEM.RelAccess relAccess) {
+            var frame = Memory.frames.get(nekiNovega.funDefn);
+            var fpTemp = new IMC.TEMP(frame.FP);
+            expr = new IMC.BINOP(
+                IMC.BINOP.Oper.ADD,
+                fpTemp,
+                new IMC.CONST(relAccess.offset)
+            );
+        } 
+        else {
+            throw new Report.Error("Unsupported memory access type.");
+        }
+    
+        if (type instanceof TYP.BoolType || type instanceof TYP.CharType) {
+            var mem1 = new IMC.MEM1(expr);
+            nekiNovega.lastExpr = mem1;
+            return ImcGen.expr.put(nameExpr, mem1);
+        }
+    
+        var mem8 = new IMC.MEM8(expr);
+        nekiNovega.lastExpr = mem8;
+        return ImcGen.expr.put(nameExpr, mem8);
     }
 
     @Override
