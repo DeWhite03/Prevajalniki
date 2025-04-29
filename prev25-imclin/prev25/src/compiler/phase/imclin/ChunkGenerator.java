@@ -211,7 +211,7 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
         var imc = ImcGen.expr.get(nameExpr);
         var type = SemAn.ofType.get(nameExpr);
         if (type instanceof TYP.PtrType) {
-            imc = ((IMC.MEM8) imc).addr;
+            imc = new IMC.MEM8(imc);
         }
         
         var l = new IMC.TEMP(new MEM.Temp());
