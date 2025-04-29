@@ -1,18 +1,94 @@
 fun putchar(c: char): void
+fun putint(n: int): void
+fun puts(s: ^char) : void
+var s: ^char
+
 
 fun main(): int =
-    puts("Hello World\0x0A"),
+    #puts("Hello World\0x0A"),
+    s = "Hello World\0x0A"
+    puts(s),
+    # puts2("Hello World\0x0A"),
     return 0
 
-fun puts(str: ^char): void =
+
+fun puts2(str: ^char): void =
+let 
+    var i: int
+    var p: ^char
+in
+    #i = 0,
+    p = str,
+    putchar(p^),
+        putchar('\0x0A'),
+    putchar(p),
+        putchar('\0x0A'),
+    putint({p^ : int})
+        putchar('\0x0A'),
+    putint({p : int}),
+end
+
+fun puts1(str: ^char): void =
     let 
         var i: int
         var p: ^char
     in
-        i = 0,
+        #i = 0,
         p = str,
-        while p^ != '\0x00' do
-            putchar(p^),
-            p = {{p : int} + 1 : ^char}
-        end
+        putchar(p^),
+        putchar(' '),
+        putint({p : int}),
+        p = {{p : int} + 1 : ^char},
+        putchar('\0x0A'),
+        putchar(p^),
+        putchar(' '),
+        putint({p : int}),
+        p = {{p : int} + 1 : ^char},
+        putchar('\0x0A'),
+        putchar(p^),
+        putchar(' '),
+        putint({p : int}),
+        p = {{p : int} + 1 : ^char},
+        putchar('\0x0A'),
+        putchar(p^),
+        putchar(' '),
+        putint({p : int}),
+        p = {{p : int} + 1 : ^char},
+        putchar('\0x0A'),
+        putchar(p^),
+        putchar(' '),
+        putint({p : int}),
+        p = {{p : int} + 1 : ^char},
+        putchar('\0x0A'),
+        putchar(p^),
+        putchar(' '),
+        putint({p : int}),
+        p = {{p : int} + 1 : ^char},
+        putchar('\0x0A'),
+        putchar(p^),
+        putchar(' '),
+        putint({p : int}),
+        p = {{p : int} + 1 : ^char},
+        putchar('\0x0A'),
+        putchar(p^),
+        putchar(' '),
+        putint({p : int}),
+        p = {{p : int} + 1 : ^char},
+        putchar('\0x0A'),
+        putchar(p^),
+        putchar(' '),
+        putint({p : int}),
+        p = {{p : int} + 1 : ^char},
+        putchar('\0x0A'),
+        putchar(p^),
+        putchar(' '),
+        putint({p : int}),
+        p = {{p : int} + 1 : ^char},
+        putchar('\0x0A')
+        # while p^ != '\0x00' do
+        #     #putint({p : int}),
+        #     putchar(p^),
+        #     #putchar('\0x0A'),
+        #     p = {{p : int} + 1 : ^char}
+        # end
     end

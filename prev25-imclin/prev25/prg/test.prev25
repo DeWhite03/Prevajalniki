@@ -1,15 +1,9 @@
 var a : int
 fun putchar(c: char): void
 fun putint(n: int): void
+fun puts(s: ^char) : void
 
 fun main() : int =
-    puts(10),
+    puts("Hello World\0x0A"),
     return 0
 
-fun puts(i : int): void =
-    if( i == 0) then
-        putint(0)
-    else
-        putint(i),
-        puts(i - 1)
-    end

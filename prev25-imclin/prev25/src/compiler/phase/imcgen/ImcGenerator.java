@@ -453,10 +453,15 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
         }
         return ImcGen.expr.put(pfxExpr, new IMC.UNOP(op, (IMC.Expr) pfxExpr.subExpr.accept(this, arg)));
     }
-
     @Override
-    public IMC.Expr visit(SfxExpr sfxExpr, ImcTracker arg) {
-        return ImcGen.expr.put(sfxExpr, new IMC.MEM8((IMC.Expr) sfxExpr.subExpr.accept(this, arg)));
+    public Object visit(AST.SfxExpr sfxExpr, ImcTracker arg) {
+        var neki = (IMC.Expr)sfxExpr.subExpr.accept(this, arg);
+        ((ImcTracker)arg).lastExpr = neki;
+        if(neki instanceof IMC.MEM1 m){
+            return ImcGen.expr.put(sfxExpr, m.addr);
+        }
+        IMC.MEM8 x = (IMC.MEM8)neki;
+        return ImcGen.expr.put(sfxExpr, x.addr);
     }
 
     @Override

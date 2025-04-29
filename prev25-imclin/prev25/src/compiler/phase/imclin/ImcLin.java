@@ -112,6 +112,7 @@ public class ImcLin extends Phase {
 			logger.endElement();
 		}
 
+		public static int i = 0;
 		public void log(LIN.CodeChunk codeChunk) {
 			if (logger == null)
 				return;
@@ -122,7 +123,7 @@ public class ImcLin extends Phase {
 			log(codeChunk.frame);
 			for (IMC.Stmt stmt : codeChunk.stmts()) {
 				logger.begElement("stmt");
-				Report.info(stmt.toString());
+				// Report.info(Objects.toString(stmt, "null"));
 				stmt.log(logger);
 				logger.endElement();
 			}

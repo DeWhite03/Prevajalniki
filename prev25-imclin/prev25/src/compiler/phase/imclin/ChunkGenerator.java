@@ -25,15 +25,22 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
         return null;
     }
 
-    // @Override
-    // public Object visit(AST.SfxExpr sfxExpr, ChunkTracker arg) {
-    //     return null;
-    // }
+    @Override
+    public IMC.Expr visit(AST.SfxExpr sfxExpr, ChunkTracker arg) {
+        var l = new IMC.TEMP(new MEM.Temp());
+        var imc = sfxExpr.subExpr.accept(this, arg);
+        // var imc = ImcGen.expr.get(sfxExpr);
+        arg.add(new IMC.MOVE(l, imc));
+        return l;
+    }
 
-    // @Override
-    // public Object visit(AST.PfxExpr pfxExpr, ChunkTracker arg) {
-    //     return null;
-    // }
+    @Override
+    public IMC.Expr visit(AST.PfxExpr pfxExpr, ChunkTracker arg) {
+        var l = new IMC.TEMP(new MEM.Temp());
+        var imc = pfxExpr.subExpr.accept(this, arg);
+        arg.add(new IMC.MOVE(l, imc));
+        return l;
+    }
 
     // public boolean isCallExpr(AST.Node node) {
     //     if (node instanceof AST.CallExpr) return true;
@@ -55,6 +62,9 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
         var lbl2 = (IMC.TEMP) binExpr.sndExpr.accept(this, arg);
         var l = new IMC.TEMP(new MEM.Temp());
         arg.add(new IMC.MOVE(l, new IMC.BINOP(t.oper, lbl1, lbl2)));
+        if (lbl1 == null) {
+            Report.info(binExpr, "lbl1 is null");
+        }
         return l;
     }
 
@@ -101,6 +111,15 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
     public IMC.Expr visit(AST.AtomExpr atomExpr, ChunkTracker arg) {
         var imc = ImcGen.expr.get(atomExpr);
         var newTemp = new IMC.TEMP(new MEM.Temp());
+        if (SemAn.ofType.get(atomExpr) instanceof TYP.PtrType ptr) {
+            if (!(ptr.baseType instanceof TYP.CharType)) {
+                return newTemp;
+            }
+            var mem = Memory.strings.get(atomExpr);
+            LIN.DataChunk dc = new DataChunk(mem);
+            ImcLin.addDataChunk(dc);
+        }
+        
         arg.add(new IMC.MOVE(newTemp, imc));
         return newTemp;
     }
@@ -177,12 +196,15 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
     @Override
     public IMC.Expr visit(AST.AssignStmt assignStmt, ChunkTracker arg) {
         var l = assignStmt.dstExpr.accept(this, arg);
-        arg.add(new IMC.MOVE(l, assignStmt.srcExpr.accept(this, arg)));
+        var r = assignStmt.srcExpr.accept(this, arg);
+        Report.info("l: " +  l.toString());
+        Report.info("r: " +  r.toString());
+        arg.add(new IMC.MOVE(l, r));
         return l;
     }
 
     public IMC.Expr visit(AST.NameExpr nameExpr, ChunkTracker arg) {
-        if (nameTempMap.containsKey(nameExpr.name)) {
+        if (nameTempMap.containsKey(nameExpr.name)) {   
             return nameTempMap.get(nameExpr.name);
         }
         
@@ -250,12 +272,20 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
         ifThenElseStmt.elseStmt.accept(this, arg);
         arg.add(new IMC.JUMP(new IMC.NAME(endLabel)));
         arg.add(new IMC.LABEL(trueLabel));
-        
+
         ifThenElseStmt.thenStmt.accept(this, arg);
 
         arg.add(new IMC.JUMP(new IMC.NAME(endLabel)));
         arg.add(new IMC.LABEL(endLabel));
         return null;
+    }
+    
+    @Override
+    public IMC.Expr visit(AST.CastExpr castExpr, ChunkTracker arg) {
+        var imc = castExpr.expr.accept(this, arg);
+        var l = new IMC.TEMP(new MEM.Temp());
+        arg.add(new IMC.MOVE(l, imc));
+        return l;
     }
 
     // @Override
