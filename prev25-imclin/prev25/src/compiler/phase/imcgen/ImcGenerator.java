@@ -211,7 +211,7 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
         }
         return Integer.parseInt(s.replace("\\0x", ""), 16);
     }
-
+    
     @Override
     public IMC.Expr visit(AST.AtomExpr atomExpr, ImcTracker arg) {
         IMC.CONST value = null;

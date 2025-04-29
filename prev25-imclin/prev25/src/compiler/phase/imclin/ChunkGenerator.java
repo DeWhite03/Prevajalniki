@@ -12,7 +12,6 @@ import java.util.*;
 
 public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
 
-    public static HashMap<String, IMC.TEMP> nameTempMap = new HashMap<>();
 
     @Override
     public IMC.Expr visit(AST.Nodes<? extends AST.Node> nodes, ChunkTracker arg) {
@@ -28,7 +27,7 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
     @Override
     public IMC.Expr visit(AST.SfxExpr sfxExpr, ChunkTracker arg) {
         var l = new IMC.TEMP(new MEM.Temp());
-        var imc = sfxExpr.subExpr.accept(this, arg);
+        var imc = new IMC.MEM8(sfxExpr.subExpr.accept(this, arg));
         // var imc = ImcGen.expr.get(sfxExpr);
         arg.add(new IMC.MOVE(l, imc));
         return l;
@@ -204,19 +203,14 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
     }
 
     public IMC.Expr visit(AST.NameExpr nameExpr, ChunkTracker arg) {
-        if (nameTempMap.containsKey(nameExpr.name)) {
-            return nameTempMap.get(nameExpr.name);
+        if (arg.nameTempMap.containsKey(nameExpr.name)) {
+            return arg.nameTempMap.get(nameExpr.name);
         }
         
         var imc = ImcGen.expr.get(nameExpr);
-        var type = SemAn.ofType.get(nameExpr);
-        if (type instanceof TYP.PtrType) {
-            imc = new IMC.MEM8(imc);
-        }
-        
         var l = new IMC.TEMP(new MEM.Temp());
         arg.add(new IMC.MOVE(l, imc));
-        nameTempMap.put(nameExpr.name, l);
+        arg.nameTempMap.put(nameExpr.name, l);
         return l;
     }
 
