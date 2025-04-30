@@ -5,68 +5,21 @@ var s : ^char
 
 
 fun main(): int =
-    #puts("Hello World\0x0A"),
-    #s = "Hello World\0x0A",
-    puts1("Hello World\0x0A"),
+    s = "Hello World\0x0A",
+    puts1(s),
     return 0
-
-
 
 fun puts1(str: ^char): void =
     let 
         var i: int
         var p: ^char
     in
-        #i = 0,
+        i = 0,
         p = str,
-        
-        putchar(p^),
-        p = {{p : int} + 1 : ^char},
-        putchar(p^),
-        p = {{p : int} + 1 : ^char},
-        putchar(p^),
-        p = {{p : int} + 1 : ^char},
-        putchar(p^),
-        p = {{p : int} + 1 : ^char},
-        putchar(p^),
-        p = {{p : int} + 1 : ^char},
-        putchar(p^),
-        p = {{p : int} + 1 : ^char},
-        putchar(p^),
-        p = {{p : int} + 1 : ^char},
-        putchar(p^),
-        p = {{p : int} + 1 : ^char},
-        putchar(p^),
-        p = {{p : int} + 1 : ^char},
-        putchar(p^),
-        p = {{p : int} + 1 : ^char},
-        putchar(p^),
-        p = {{p : int} + 1 : ^char},
-        putchar(p^),
-        p = {{p : int} + 1 : ^char},
-        putint({p^ : int}),
-        p = {{p : int} + 1 : ^char},
-        putint({p^ : int})
-        # while p^ != '\0x00' do
-        #     #putint({p : int}),
-        #     putchar(p^),
-        #     #putchar('\0x0A'),
-        #     p = {{p : int} + 1 : ^char}
-        # end
+        while p^ != '\0x00' do
+            #putint({p : int}),
+            putchar(p^),
+            #putchar('\0x0A'),
+            p = {{p : int} + 1 : ^char}
+        end
     end
-
-fun puts2(str: ^char): void =
-let 
-    var i: int
-    var p: ^char
-in
-    #i = 0,
-    p = str,
-    putchar(p^),
-        putchar('\0x0A'),
-    putchar(p),
-        putchar('\0x0A'),
-    putint({p^ : int}), 
-        putchar('\0x0A'),
-    putint({p : int})
-end

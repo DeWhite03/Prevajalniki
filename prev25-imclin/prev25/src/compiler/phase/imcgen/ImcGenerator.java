@@ -448,14 +448,29 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
             case SUB:
                 op = IMC.UNOP.Oper.NEG;
                 break;
+            case PTR:
+                op = null;
+                break;
             default:
                 break;
+        }
+
+        if (op == null) {
+            IMC.Expr subExprIMC = (IMC.Expr) pfxExpr.subExpr.accept(this, arg);
+            if (subExprIMC instanceof IMC.MEM8 mem8) {
+                subExprIMC = mem8.addr;
+            }
+            else if (subExprIMC instanceof IMC.MEM1 mem1) {
+                subExprIMC = mem1.addr;
+            }
+            return ImcGen.expr.put(pfxExpr, subExprIMC);
         }
         return ImcGen.expr.put(pfxExpr, new IMC.UNOP(op, (IMC.Expr) pfxExpr.subExpr.accept(this, arg)));
     }
 
     @Override
     public IMC.Expr visit(SfxExpr sfxExpr, ImcTracker arg) {
+
         return ImcGen.expr.put(sfxExpr, new IMC.MEM8((IMC.Expr) sfxExpr.subExpr.accept(this, arg)));
     }
 

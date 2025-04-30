@@ -278,31 +278,29 @@ public class MemEvaluator implements AST.FullVisitor<Object, Tracker> {
                     newString += '"';
                 } else if (s.charAt(i) == '0' && s.charAt(i + 1) == 'x') {
                     var subs = s.substring(i + 2, i + 4);
-                    Report.info(subs);
+                    // Report.info(subs);
                     newString += (char) Integer.parseInt(subs, 16);
-                    i += 3;
+                    i += 4;
                 }
             } else {
                 newString += s.charAt(i);
             }
         }
-        Report.info("new string:" + newString);
+        // Report.info("new string: '" + newString + "'");
         return newString;
     }
-    
-
 
     @Override
     public Object visit(AST.AtomExpr atomExpr, Tracker tracker) {
         switch (atomExpr.type) {
             case STR:
-                long size = (long) (atomExpr.value.length());
                 // Report.info("String size: " + size);
                 String str = atomExpr.value.substring(1, atomExpr.value.length() - 1);
-                str = fixString(str) + '\0';
+                // str = '"' + fixString(str) + '\0'  + '"';
                 // Report.info("String value: " + str);
+                str = fixString(str);
                 var lbl = new MEM.Label();
-                var access = new MEM.AbsAccess(str.length(), lbl, str);
+                var access = new MEM.AbsAccess(str.length()+1, lbl, str);
                 Memory.strings.put(atomExpr, access);
                 break;
             default:

@@ -4,6 +4,7 @@ import compiler.common.report.*;
 import compiler.phase.memory.*;
 import compiler.phase.abstr.*;
 import compiler.phase.abstr.AST.Nodes;
+import compiler.phase.abstr.AST.PtrType;
 import compiler.phase.imclin.LIN.*;
 import compiler.phase.imcgen.*;
 import compiler.phase.seman.*;
@@ -27,8 +28,14 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
     @Override
     public IMC.Expr visit(AST.SfxExpr sfxExpr, ChunkTracker arg) {
         var l = new IMC.TEMP(new MEM.Temp());
-        var imc = new IMC.MEM8(sfxExpr.subExpr.accept(this, arg));
-        // var imc = ImcGen.expr.get(sfxExpr);
+        var type = SemAn.ofType.get(sfxExpr);
+        // Report.info(type.toString());
+        var imc = sfxExpr.subExpr.accept(this, arg);
+        if (type instanceof TYP.CharType || type instanceof TYP.BoolType) {
+            imc = new IMC.MEM1(imc);
+        } else {
+            imc = new IMC.MEM8(imc);
+        }
         arg.add(new IMC.MOVE(l, imc));
         return l;
     }
@@ -37,22 +44,15 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
     public IMC.Expr visit(AST.PfxExpr pfxExpr, ChunkTracker arg) {
         var l = new IMC.TEMP(new MEM.Temp());
         var imc = pfxExpr.subExpr.accept(this, arg);
+        if (pfxExpr.oper == AST.PfxExpr.Oper.PTR) {
+            imc = new IMC.MEM8(imc);
+        }
+        // if (SemAn.ofType.get(pfxExpr) instanceof TYP.PtrType) {
+        //     imc = new IMC.MEM8(imc);
+        // }
         arg.add(new IMC.MOVE(l, imc));
         return l;
     }
-
-    // public boolean isCallExpr(AST.Node node) {
-    //     if (node instanceof AST.CallExpr) return true;
-    //     if (node instanceof AST.BinExpr expr) return isCallExpr(expr.fstExpr) || isCallExpr(expr.sndExpr);
-    //     if (node instanceof AST.CastExpr expr) return isCallExpr(expr.expr);
-    //     if (node instanceof AST.SfxExpr expr) return isCallExpr(expr.subExpr);
-    //     if (node instanceof AST.PfxExpr expr) return isCallExpr(expr.subExpr);
-    //     return false;
-    // }
-
-    // public boolean isCallExprOneLevel(AST.Node node) {
-    //     return node instanceof AST.CallExpr;
-    // }
 
     @Override
     public IMC.Expr visit(AST.BinExpr binExpr, ChunkTracker arg) {
@@ -123,53 +123,6 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
         return newTemp;
     }
 
-    // public Vector<IMC.Expr> checkAndFixArgumentCall(AST.Nodes<? extends AST.Node> nodes, ChunkTracker arg, int depth) {
-    //     Vector<IMC.Expr> args = new Vector<>();
-
-    //     args.add(new IMC.MEM8(arg.SL));
-
-    //     for (AST.Node node : nodes) {
-    //         IMC.Expr expr = ImcGen.expr.get(node);
-    //         if (expr instanceof IMC.CALL call) {
-    //             Vector<IMC.Expr> fixedArgs = checkAndFixArgumentCallRec(call.args, arg, depth + 1);
-    //             IMC.Expr temp = new IMC.TEMP(new MEM.Temp());
-    //             arg.add(new IMC.MOVE(temp, new IMC.CALL(call.addr, call.offs, fixedArgs)));
-    //             args.add(temp);
-    //         } else if (expr instanceof IMC.CONST || expr instanceof IMC.TEMP || expr instanceof IMC.MEM8) {
-    //             args.add(expr);
-    //         } else {
-    //             IMC.Expr temp = new IMC.TEMP(new MEM.Temp());
-    //             arg.add(new IMC.MOVE(temp, expr));
-    //             args.add(temp);
-    //         }
-    //     }
-
-    //     // Report.info("Depth of call: " + depth);
-    //     return args;
-    // }
-
-    // public Vector<IMC.Expr> checkAndFixArgumentCallRec(Vector<IMC.Expr> args, ChunkTracker arg, int depth) {
-    //     Vector<IMC.Expr> fixedArgs = new Vector<>();
-
-    //     for (IMC.Expr expr : args) {
-    //         if (expr instanceof IMC.CALL call) {
-    //             Vector<IMC.Expr> nested = checkAndFixArgumentCallRec(call.args, arg, depth + 1);
-    //             IMC.Expr temp = new IMC.TEMP(new MEM.Temp());
-    //             arg.add(new IMC.MOVE(temp, new IMC.CALL(call.addr, call.offs, nested)));
-    //             fixedArgs.add(temp);
-    //         } else if (expr instanceof IMC.CONST || expr instanceof IMC.TEMP) {
-    //             fixedArgs.add(expr);
-    //         } else {
-    //             IMC.Expr temp = new IMC.TEMP(new MEM.Temp());
-    //             arg.add(new IMC.MOVE(temp, expr));
-    //             fixedArgs.add(temp);
-    //         }
-    //     }
-
-    //     // Report.info("Depth of call: " + depth);
-    //     return fixedArgs;
-    // }
-
     @Override
     public IMC.Expr visit(AST.CallExpr callExpr, ChunkTracker arg) {
         var expr = (IMC.CALL) ImcGen.expr.get(callExpr);
@@ -196,6 +149,23 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
     public IMC.Expr visit(AST.AssignStmt assignStmt, ChunkTracker arg) {
         var l = assignStmt.dstExpr.accept(this, arg);
         var r = assignStmt.srcExpr.accept(this, arg);
+
+        Report.info("l: " + l.toString());
+        Report.info("r: " + assignStmt.dstExpr.toString());
+        if (assignStmt.dstExpr instanceof AST.PfxExpr pfxExpr) {
+            Report.info(pfxExpr.toString());
+            if (pfxExpr.oper == AST.PfxExpr.Oper.PTR) {
+                var type = SemAn.ofType.get(pfxExpr);
+                if (type instanceof TYP.PtrType ptr) {
+                        Report.info(ptr.toString());
+                    if (ptr.baseType instanceof TYP.CharType) {
+                        r = new IMC.MEM1(r);
+                    } else {
+                        r = new IMC.MEM8(r);
+                    }
+                }
+            }
+        }
         // Report.info("l: " +  l.toString());
         // Report.info("r: " +  r.toString());
         arg.add(new IMC.MOVE(l, r));
@@ -208,22 +178,19 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
         }
         
         var imc = ImcGen.expr.get(nameExpr);
+        if (imc instanceof IMC.MEM8 mem) {
+            imc = mem.addr;
+            if (!(imc instanceof IMC.NAME)) {
+                imc = new IMC.MEM8(imc);
+            }
+        }
+        // Report.info("name: " + nameExpr.name);
         var l = new IMC.TEMP(new MEM.Temp());
         arg.add(new IMC.MOVE(l, imc));
         arg.nameTempMap.put(nameExpr.name, l);
         return l;
     }
 
-    // @Override
-    // public Object visit(AST.LetStmt letStmt, ChunkTracker arg) {
-    //     ChunkTracker innerContext = new ChunkTracker();
-    //     innerContext.SL = arg.SL;
-    //     letStmt.defns.accept(this, innerContext);
-    //     letStmt.stmts.accept(this, innerContext);
-
-    //     arg.addAll(innerContext.getVec());
-    //     return null;
-    // }
 
     @Override
     public IMC.Expr visit(AST.IfThenStmt ifThenStmt, ChunkTracker arg) {
@@ -287,36 +254,11 @@ public class ChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker> {
         return l;
     }
 
-    // @Override
-    // public Object visit(AST.ExprStmt exprStmt, ChunkTracker arg) {
-    //     IMC.ESTMT estmt = (IMC.ESTMT) ImcGen.stmt.get(exprStmt);
-
-    //     if (estmt.expr instanceof IMC.CALL call) {
-    //         AST.CallExpr callExpr = (AST.CallExpr) exprStmt.expr;
-    //         // Report.info(arg.SL.toString());
-    //         Vector<IMC.Expr> args = checkAndFixArgumentCall(callExpr.argExprs, arg, 0);
-
-    //         estmt = new IMC.ESTMT(new IMC.CALL(call.addr, call.offs, args));
-    //     }
-
-    //     // arg.add(estmt);
-    //     return null;
-    // }
-
-    // public Vector<IMC.Stmt> removeStmts(IMC.STMTS stmts) {
-    //     Vector<IMC.Stmt> flat = new Vector<>();
-    //     for (IMC.Stmt stmt : stmts.stmts) {
-    //         if (stmt instanceof IMC.STMTS nested) {
-    //             flat.addAll(removeStmts(nested));
-    //         } else {
-    //             flat.add(stmt);
-    //         }
-    //     }
-    //     return flat;
-    // }
-
-    // @Override
-    // public Object visit(Object o, Object o2) {
-    //     throw new Report.Error("Not yet implemented for " + o.toString());
-    // }
+    @Override
+    public IMC.Expr visit(AST.SizeExpr sizeExpr, ChunkTracker arg) {
+        var imc = ImcGen.expr.get(sizeExpr);
+        var l = new IMC.TEMP(new MEM.Temp());
+        arg.add(new IMC.MOVE(l, imc));
+        return l;
+    }
 }
