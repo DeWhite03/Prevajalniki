@@ -1,0 +1,9 @@
+var m : int
+fun ptr() : ^int =
+    return ^m
+fun putint(n : int) : void
+fun main(): int =
+    putint(^m),
+    putint(^m),
+    ptr()^ = 5,
+    return m-5
