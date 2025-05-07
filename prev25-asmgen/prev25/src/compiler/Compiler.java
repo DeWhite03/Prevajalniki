@@ -15,7 +15,6 @@ import compiler.phase.imcgen.*;
 import compiler.phase.imclin.*;
 import compiler.phase.asmgen.*;
 
-
 /**
  * The Prev25 compiler.
  * 
@@ -222,32 +221,23 @@ public class Compiler {
 
 				// Linearization of intermediate code.
 				try (ImcLin imclin = new ImcLin()) {
-					// Report.info("IMCLIN");
-					Abstr.tree.accept(new ChunkGenerator(), null);
+					Abstr.tree.accept(new oldChunkGenerator(), null);
 					imclin.log();
 
-					// try {
-						if (true) {
-							Interpreter interpreter = new Interpreter(ImcLin.dataChunks(), ImcLin.codeChunks());
-							System.out.println("EXIT CODE: " + interpreter.run("_main"));
-						}
-					// }
-					// catch (StackOverflowError e) {
-					// 	System.out.println("Stack overflow: " + e.getMessage());
-					// }
-					// catch (Exception e) {
-					// 	System.out.println("Runtime error: " + e.getMessage());
-					// } catch (Report.InternalError e) {
-					// 	System.out.println("Internal error: " + e.getMessage());
-					// }
-				}
-				if (cmdLineOptValues.get("--target-phase").equals("imclin"))
-					break;
-					try (AsmGen asmGen = new AsmGen()) {
-						
+					if (false) {
+						Interpreter interpreter = new Interpreter(ImcLin.dataChunks(), ImcLin.codeChunks());
+						System.out.println("EXIT CODE: " + interpreter.run("_main"));
 					}
-					if (cmdLineOptValues.get("--target-phase").equals("imclin"))
-						break;
+				}
+
+				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
+					break;
+				try (AsmGen asmGen = new AsmGen()) {
+					AsmGenerator.generateAsmChunks();
+					System.out.println(asmGen.toString());
+				}
+				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
+					break;
 
 				// Do not loop... ever.
 				break;

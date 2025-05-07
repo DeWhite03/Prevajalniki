@@ -13,7 +13,7 @@ public class Interpreter {
 
     private Scanner scanner = new Scanner(System.in);
 
-    private boolean debug = true;
+    private boolean debug = false;
 
     /** if CJUMP cond is <strong>false</strong>, fall through */
     private final boolean ENFORCE_FALL_THROUGH = true;

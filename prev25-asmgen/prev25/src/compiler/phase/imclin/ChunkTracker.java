@@ -15,12 +15,29 @@ public class ChunkTracker {
     public IMC.TEMP RV;
     public MEM.Label funExit;
     public MEM.Label funEntry;
+    public boolean condStmt = false;
     public ChunkTracker(){
 
     }
-    public void add(IMC.Stmt n){
+
+    public void add(IMC.Stmt n) {
         statements.addLast(n);
     }
+    
+    public IMC.Stmt pop() {
+        if (statements.size() == 0) {
+            return null;
+        }
+        return statements.remove(statements.size() - 1);
+    }
+
+    public IMC.Stmt getLast() {
+        if (statements.size() == 0) {
+            return null;
+        }
+        return statements.get(statements.size() - 1);
+    }
+
     public void addFirst(IMC.Stmt n){
         statements.add(0,n);
     }
