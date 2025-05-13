@@ -29,6 +29,10 @@ public class AsmGenerator {
         return new ASM.ImmOperand(value);
     }
 
+    private static boolean checkImmediate(long vlaue) {
+        if( )
+    }
+
     public AsmGenerator() {}
 
     public static void generateAsmChunks() {
@@ -65,25 +69,26 @@ public class AsmGenerator {
         if (stmt instanceof IMC.CJUMP cjump) {
             // Conditional jump (evaluates the condition)
             // Operand cond = op((IMC.TEMP) cjump.cond);   // Condition to check (e.g., a register or value)
-            IMC.BINOP cond = (IMC.BINOP) cjump.cond;
-            IMC.TEMP l = (IMC.TEMP) cond.fstExpr;
-            IMC.TEMP r = (IMC.TEMP) cond.sndExpr;
+            IMC.TEMP cond = (IMC.TEMP) cjump.cond;
+            // IMC.TEMP l = (IMC.TEMP) cond.fstExpr;
+            // IMC.TEMP r = (IMC.TEMP) cond.sndExpr;
             Operand posAddr = op((IMC.NAME) cjump.posAddr); // Positive address (if true)
             Operand negAddr = op((IMC.NAME) cjump.negAddr); // Negative address (if false)
 
-            if(cond.oper == IMC.BINOP.Oper.EQU) {
-                lines.add(new ASM.B("BEQ", op(l), op(r), posAddr));
-            } else if (cond.oper == IMC.BINOP.Oper.NEQ) {
-                lines.add(new ASM.B("BNE", op(l), op(r), negAddr));
-            } else if (cond.oper == IMC.BINOP.Oper.LTH) {
-                lines.add(new ASM.B("BLT", op(l), op(r), posAddr));
-            } else if (cond.oper == IMC.BINOP.Oper.GTH) {
-                lines.add(new ASM.B("BGT", op(l), op(r), negAddr));
-            } else if (cond.oper == IMC.BINOP.Oper.LEQ) {
-                lines.add(new ASM.B("BLE", op(l), op(r), posAddr));
-            } else if (cond.oper == IMC.BINOP.Oper.GEQ) {
-                lines.add(new ASM.B("BGE", op(l), op(r), negAddr));
-            }
+            lines.add(new ASM.B("BNE", op(cond), op("x0"), posAddr));
+            // if(cond.oper == IMC.BINOP.Oper.EQU) {
+            //     lines.add(new ASM.B("BEQ", op(l), op(r), posAddr));
+            // } else if (cond.oper == IMC.BINOP.Oper.NEQ) {
+            //     lines.add(new ASM.B("BNE", op(l), op(r), negAddr));
+            // } else if (cond.oper == IMC.BINOP.Oper.LTH) {
+            //     lines.add(new ASM.B("BLT", op(l), op(r), posAddr));
+            // } else if (cond.oper == IMC.BINOP.Oper.GTH) {
+            //     lines.add(new ASM.B("BGT", op(l), op(r), negAddr));
+            // } else if (cond.oper == IMC.BINOP.Oper.LEQ) {
+            //     lines.add(new ASM.B("BLE", op(l), op(r), posAddr));
+            // } else if (cond.oper == IMC.BINOP.Oper.GEQ) {
+            //     lines.add(new ASM.B("BGE", op(l), op(r), negAddr));
+            // }
             return lines;
             // lines.add()
             // lines.add(new ASM.I("BEQ", cond, posAddr, 0)); // BEQ instruction for conditional jump
