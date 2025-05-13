@@ -104,7 +104,7 @@ public class AsmGenerator {
                             argOp = op(tempArg);
                         } else if (arg instanceof IMC.MEM8 memArg && memArg.addr instanceof IMC.TEMP tempAddr) {
                             argOp = new TempOperand(new IMC.TEMP(new MEM.Temp())); // allocate a temp
-                            lines.add(new ASM.S("LD", argOp, op(tempAddr), op(0)));
+                            lines.add(new ASM.I("LD", argOp, op(tempAddr), op(0)));
                         } else {
                             continue; // Skip unsupported cases for now
                         }
@@ -144,15 +144,15 @@ public class AsmGenerator {
                 }
                 if (move.src instanceof IMC.MEM8 src) {
                     if (src.addr instanceof IMC.TEMP tmp) {
-                        lines.add(new ASM.S("LD", op(dst), op(tmp), op(0)));
+                        lines.add(new ASM.I("LD", op(dst), op(tmp), op(0)));
                         return lines;
                     }
                     if (src.addr instanceof IMC.CONST cst) {
-                        lines.add(new ASM.S("LD", op(dst), op("x0"), op(cst.value)));
+                        lines.add(new ASM.I("LD", op(dst), op("x0"), op(cst.value)));
                         return lines;
                     }
                     if (src.addr instanceof IMC.BINOP binop && binop.oper == IMC.BINOP.Oper.ADD) {
-                        lines.add(new ASM.S("LD", op(dst), op((IMC.TEMP) binop.fstExpr),
+                        lines.add(new ASM.I("LD", op(dst), op((IMC.TEMP) binop.fstExpr),
                                 op(((IMC.CONST) binop.sndExpr).value)));
                         return lines;
                     }

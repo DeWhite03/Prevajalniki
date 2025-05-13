@@ -1,10 +1,11 @@
 package compiler.phase.asmgen;
 
 import compiler.phase.imcgen.*;
+
+import java.util.Arrays;
 import java.util.Vector;
 
 public class ASM {
-
     public static abstract class Operand {
         @Override
         public abstract String toString();
@@ -102,8 +103,8 @@ public class ASM {
 
     public static abstract class Instr extends Line {
         public String opcode;
-        public Vector<IMC.TEMP> use = new Vector<>();
-        public Vector<IMC.TEMP> def = new Vector<>();
+        public Vector<TempOperand> use = new Vector<TempOperand>();
+        public Vector<TempOperand> def = new Vector<TempOperand>();
     }
 
     public static class R extends Instr {
@@ -116,11 +117,20 @@ public class ASM {
             this.rd = rd;
             this.rs1 = rs1;
             this.rs2 = rs2;
+            if(rs1 instanceof TempOperand t) {
+                use.add(t);
+            }
+            if(rs2 instanceof TempOperand t) {
+                use.add(t);
+            }
+            if(rd instanceof TempOperand t) {
+                def.add(t);
+            }
         }
 
         @Override
         public String toString() {
-            return opcode + " " + rd + ", " + rs1 + ", " + rs2;
+            return opcode + " " + rd + ", " + rs1 + ", " + rs2 + " | use: " + use + " | def: " + def;
         }
     }
 
@@ -134,11 +144,20 @@ public class ASM {
             this.rd = rd;
             this.rs1 = rs1;
             this.imm = imm;
+            if(rs1 instanceof TempOperand t) {
+                use.add(t);
+            }
+            if(imm instanceof TempOperand t) {
+                use.add(t);
+            }
+            if(rd instanceof TempOperand t) {
+                def.add(t);
+            }
         }
 
         @Override
         public String toString() {
-            return opcode + " " + rd + ", " + rs1 + ", " + imm;
+            return opcode + " " + rd + ", " + rs1 + ", " + imm + " | use: " + use + " | def: " + def;
         }
     }
 
@@ -152,11 +171,20 @@ public class ASM {
             this.rs1 = rs1;
             this.rs2 = rs2;
             this.offset = offset;
+            if(rs1 instanceof TempOperand t) {
+                use.add(t);
+            }
+            if(rs2 instanceof TempOperand t) {
+                use.add(t);
+            }
+            if(offset instanceof TempOperand t) {
+                use.add(t);
+            }
         }
 
         @Override
         public String toString() {
-            return opcode + " " + rs2 + ", " + offset + "(" + rs1 + ")";
+            return opcode + " " + rs2 + ", " + offset + "(" + rs1 + ")" + " | use: " + use + " | def: " + def;
         }
     }
 
@@ -170,11 +198,22 @@ public class ASM {
             this.rs1 = rs1;
             this.rs2 = rs2;
             this.offset = offset;
+
+            
+            if(rs1 instanceof TempOperand t) {
+                use.add(t);
+            }
+            if(rs2 instanceof TempOperand t) {
+                use.add(t);
+            }
+            if(offset instanceof TempOperand t) {
+                def.add(t);
+            }
         }
 
         @Override
         public String toString() {
-            return opcode + " " + rs1 + ", " + rs2 + ", " + offset;
+            return opcode + " " + rs1 + ", " + rs2 + ", " + offset + " | use: " + use + " | def: " + def;
         }
     }
 
@@ -186,11 +225,21 @@ public class ASM {
             this.opcode = opcode;
             this.rd = rd;
             this.imm = imm;
+
+            
+            if(imm instanceof TempOperand t) {
+                use.add(t);
+            }
+            if(rd instanceof TempOperand t) {
+                def.add(t);
+            }
         }
+
+        
 
         @Override
         public String toString() {
-            return opcode + " " + rd + ", " + imm;
+            return opcode + " " + rd + ", " + imm + " | use: " + use + " | def: " + def;
         }
     }
 
@@ -203,6 +252,14 @@ public class ASM {
             this.opcode = opcode;
             this.rd = rd;
             this.offset = offset;
+
+            
+            if(offset instanceof TempOperand t) {
+                use.add(t);
+            }
+            if(rd instanceof TempOperand t) {
+                def.add(t);
+            }
         }
 
         public J(String opcode, Operand rd, Operand rs1, Operand offset) {
@@ -210,14 +267,25 @@ public class ASM {
             this.rd = rd;
             this.rs1 = rs1;
             this.offset = offset;
+
+            
+            if(rs1 instanceof TempOperand t) {
+                use.add(t);
+            }
+            if(offset instanceof TempOperand t) {
+                use.add(t);
+            }
+            if(rd instanceof TempOperand t) {
+                def.add(t);
+            }
         }
 
         @Override
         public String toString() {
             if (rs1 != null)
-                return opcode + " " + rd + ", " + offset + "(" + rs1 + ")";
+                return opcode + " " + rd + ", " + offset + "(" + rs1 + ")" + " | use: " + use + " | def: " + def;
             else
-                return opcode + " " + rd + ", " + offset;
+                return opcode + " " + rd + ", " + offset + " | use: " + use + " | def: " + def;
         }
     }
 }
