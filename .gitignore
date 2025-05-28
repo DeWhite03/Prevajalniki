@@ -4,3 +4,9 @@ prev25/src/compiler/phase/lexan/.antlr/*
 **/bin
 **/*.class
 **/*~
+**/Prev25Parser.interp
+**/Prev25Parser.java
+**/Prev25Parser.tokens
+**/Prev25Lexer.interp
+**/Prev25Lexer.java
+**/Prev25Lexer.tokens
