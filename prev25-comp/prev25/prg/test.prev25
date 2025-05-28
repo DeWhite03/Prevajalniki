@@ -1,0 +1,9 @@
+var a : int
+fun putchar(c: char): void
+fun putint(n: int): void
+fun puts(s: ^char) : void
+
+fun main() : int =
+    puts("Hello World\0x0A"),
+    return 0
+
