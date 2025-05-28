@@ -1,8 +1,9 @@
 var b: int
 fun main() : int =
-    b = 0,
-    while b < 10 do
-        b = b + 1
+    let 
+        fun f(): int = return 1
+    in 
+        return f()
     end,
     return 0
 

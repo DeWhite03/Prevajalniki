@@ -10,3 +10,5 @@ prev25/src/compiler/phase/lexan/.antlr/*
 **/Prev25Lexer.interp
 **/Prev25Lexer.java
 **/Prev25Lexer.tokens
+**/*.xml
+**/*.html

@@ -44,6 +44,7 @@ public class ChunkGenerator implements AST.FullVisitor<Object, Object> {
             switch (statement) {
             case IMC.CJUMP conditionalJumpStatement -> {
                 IMC.LABEL newNegativeLabel = new IMC.LABEL(new MEM.Label());
+
                 linearized.add(new IMC.CJUMP(
                     conditionalJumpStatement.cond,
                     conditionalJumpStatement.posAddr,
@@ -71,4 +72,10 @@ public class ChunkGenerator implements AST.FullVisitor<Object, Object> {
         }
         return null;
     }
+
+    // public Object visit(AST.LetStmt letStmt, Object arg) {
+    //     letStmt.defns.accept(this, arg);
+    //     letStmt.stmts.accept(this, null);
+    //     return null;
+    // }
 }

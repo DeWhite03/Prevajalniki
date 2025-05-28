@@ -126,10 +126,12 @@ public class oldChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker
     @Override
     public IMC.Expr visit(AST.CallExpr callExpr, ChunkTracker arg) {
         var expr = (IMC.CALL) ImcGen.expr.get(callExpr);
+
         
         var l = new IMC.TEMP(new MEM.Temp());
         Vector<IMC.Expr> args = new Vector<>();
         Vector<Long> offsets = new Vector<>();
+
 
         args.add(new IMC.MEM8(arg.SL));
         offsets.add(8L);
@@ -199,7 +201,6 @@ public class oldChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker
         var falseLabel = new MEM.Label();
         var endLabel = new MEM.Label();
         arg.add(new IMC.CJUMP(condition, new IMC.NAME(trueLabel), new IMC.NAME(falseLabel)));
-        // arg.add(new IMC.CJUMP(condExpr, new IMC.NAME(trueLabel), new IMC.NAME(falseLabel)));
         arg.add(new IMC.LABEL(falseLabel));
         arg.add(new IMC.JUMP(new IMC.NAME(endLabel)));
         arg.add(new IMC.LABEL(trueLabel));
@@ -218,7 +219,9 @@ public class oldChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker
         var endLabel = new MEM.Label();
         arg.add(new IMC.LABEL(conditionLabel));
         var condition = whileStmt.condExpr.accept(this, arg);
-        arg.add(new IMC.CJUMP(condition, new IMC.NAME(trueLabel), new IMC.NAME(endLabel)));
+        IMC.MOVE condIMC = (IMC.MOVE) arg.pop();
+        var condExpr = condIMC.src;
+        arg.add(new IMC.CJUMP(condExpr, new IMC.NAME(trueLabel), new IMC.NAME(endLabel)));
         arg.add(new IMC.JUMP(new IMC.NAME(endLabel)));
         arg.add(new IMC.LABEL(trueLabel));
         whileStmt.stmts.accept(this, arg);
@@ -230,13 +233,12 @@ public class oldChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker
     @Override
     public IMC.Expr visit(AST.IfThenElseStmt ifThenElseStmt, ChunkTracker arg) {
         var condition = ifThenElseStmt.condExpr.accept(this, arg);
-        // IMC.MOVE condIMC = (IMC.MOVE) arg.pop();
-        // var condExpr = condIMC.src;
+        IMC.MOVE condIMC = (IMC.MOVE) arg.pop();
+        var condExpr = condIMC.src;
         var trueLabel = new MEM.Label();
         var falseLabel = new MEM.Label();
         var endLabel = new MEM.Label();
-        arg.add(new IMC.CJUMP(condition, new IMC.NAME(trueLabel), new IMC.NAME(falseLabel)));
-        // arg.add(new IMC.CJUMP(condExpr, new IMC.NAME(trueLabel), new IMC.NAME(falseLabel)));
+        arg.add(new IMC.CJUMP(condExpr, new IMC.NAME(trueLabel), new IMC.NAME(falseLabel)));
         arg.add(new IMC.LABEL(falseLabel));
 
         ifThenElseStmt.elseStmt.accept(this, arg);
@@ -265,7 +267,4 @@ public class oldChunkGenerator implements AST.FullVisitor<IMC.Expr, ChunkTracker
         arg.add(new IMC.MOVE(l, imc));
         return l;
     }
-
-    @Override
-    public IMC.Expr visit(AST.)
 }

@@ -1,0 +1,8 @@
+fun putchar(c: char): void
+var i : int
+fun main(): int =
+    while i < 10 do
+        putchar('h'),
+        i = i + 1
+    end,
+    return 0
