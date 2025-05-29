@@ -15,6 +15,7 @@ import compiler.phase.imcgen.*;
 import compiler.phase.imclin.*;
 import compiler.phase.asmgen.*;
 import compiler.phase.livean.*;
+import compiler.phase.regall.*;
 
 /**
  * The Prev25 compiler.
@@ -230,9 +231,9 @@ public class Compiler {
 						System.out.println("EXIT CODE: " + interpreter.run("_main"));
 					}
 				}
-
-				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
+				if (cmdLineOptValues.get("--target-phase").equals("imclin"))
 					break;
+
 				try (AsmGen asmGen = new AsmGen()) {
 					AsmGenerator.generateAsmChunks();
 					// System.out.println(asmGen.toString());
@@ -240,16 +241,20 @@ public class Compiler {
 				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
 					break;
 
-				
-				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
-					break;
 				try (LiveAn liveAn = new LiveAn()) {
 					LivenessAnalyzer.analyzeChunks();
-					System.out.println(liveAn.toString());
+					// System.out.println(liveAn.toString());
 				}
 				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
 					break;
 
+				
+				try (RegAll regAll = new RegAll(32)) {
+					regAll.allocate();
+					System.out.println(regAll.toString());
+				}
+				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
+					break;
 				// Do not loop... ever.
 				break;
 			}

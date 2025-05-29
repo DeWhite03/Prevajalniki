@@ -50,7 +50,7 @@ public class AsmGenerator {
     }
 
     private static Vector<ASM.Line> generateLines(IMC.Stmt stmt) {
-        Report.info(stmt.toString());
+        // Report.info(stmt.toString());
         Vector<ASM.Line> lines = new Vector<>();
 
         if (stmt instanceof IMC.LABEL lbl) {

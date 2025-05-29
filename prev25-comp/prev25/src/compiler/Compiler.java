@@ -14,6 +14,7 @@ import compiler.phase.memory.*;
 import compiler.phase.imcgen.*;
 import compiler.phase.imclin.*;
 import compiler.phase.asmgen.*;
+import compiler.phase.livean.*;
 
 /**
  * The Prev25 compiler.
@@ -29,7 +30,7 @@ public class Compiler {
 
 	/** Names of command line options. */
 	private static final HashSet<String> cmdLineOptNames = new HashSet<String>(Arrays.asList("--src-file-name",
-			"--dst-file-name", "--target-phase", "--logged-phase", "--xml", "--xsl", "--dev-mode", "--num-regs"));
+			"--dst-file-name", "--target-phase", "--logged-phase", "--xml", "--xsl", "--dev-mode"));
 
 	/** Values of command line options indexed by their command line option name. */
 	private static final HashMap<String, String> cmdLineOptValues = new HashMap<String, String>();
@@ -229,21 +230,24 @@ public class Compiler {
 						System.out.println("EXIT CODE: " + interpreter.run("_main"));
 					}
 				}
-				if (cmdLineOptValues.get("--target-phase").equals("imclin"))
+
+				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
 					break;
-				
 				try (AsmGen asmGen = new AsmGen()) {
 					AsmGenerator.generateAsmChunks();
-					System.out.println(asmGen.toString());
+					// System.out.println(asmGen.toString());
 				}
 				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
 					break;
+
 				
-				try (AsmGen asmGen = new AsmGen()) {
-					AsmGenerator.generateAsmChunks();
-					System.out.println(asmGen.toString());
+				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
+					break;
+				try (LiveAn liveAn = new LiveAn()) {
+					LivenessAnalyzer.analyzeChunks();
+					System.out.println(liveAn.toString());
 				}
-				if (cmdLineOptValues.get("--target-phase").equals("regall"))
+				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
 					break;
 
 				// Do not loop... ever.

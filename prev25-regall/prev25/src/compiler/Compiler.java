@@ -13,6 +13,7 @@ import compiler.phase.seman.*;
 import compiler.phase.memory.*;
 import compiler.phase.imcgen.*;
 import compiler.phase.imclin.*;
+import compiler.phase.livean.*;
 import compiler.phase.asmgen.*;
 
 /**
@@ -238,7 +239,12 @@ public class Compiler {
 				}
 				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
 					break;
-				
+				try (LiveAn liveAn = new LiveAn()) {
+					LivenessAnalyzer.analyzeChunks();
+					System.out.println(liveAn.toString());
+				}
+				if (cmdLineOptValues.get("--target-phase").equals("livean"))
+					break;
 				try (AsmGen asmGen = new AsmGen()) {
 					AsmGenerator.generateAsmChunks();
 					System.out.println(asmGen.toString());

@@ -103,14 +103,14 @@ public class LivenessAnalyzer {
                 for (ASM.Instr succInstr : succ.getOrDefault(instr, Set.of())) {
                     out.addAll(succInstr.in);
                 }
-                instr.out = new Vector<>(out);
+                instr.out = new HashSet<>(out);
 
                 // in[n] = use[n] ∪ (out[n] - def[n])
                 Set<ASM.TempOperand> in = new HashSet<>(instr.use);
                 Set<ASM.TempOperand> outMinusDef = new HashSet<>(out);
                 outMinusDef.removeAll(instr.def);
                 in.addAll(outMinusDef);
-                instr.in = new Vector<>(in);
+                instr.in = new HashSet<>(in);
 
                 if (!in.equals(new HashSet<>(inOld)) || !out.equals(new HashSet<>(outOld))) {
                     changed = true;

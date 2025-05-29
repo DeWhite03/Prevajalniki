@@ -3,6 +3,7 @@ package compiler.phase.asmgen;
 import compiler.phase.imcgen.*;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Vector;
 
 public class ASM {
@@ -103,11 +104,11 @@ public class ASM {
 
     public static abstract class Instr extends Line {
         public String opcode;
-        public Vector<TempOperand> use = new Vector<TempOperand>();
-        public Vector<TempOperand> def = new Vector<TempOperand>();
+        public HashSet<TempOperand> use = new HashSet<TempOperand>();
+        public HashSet<TempOperand> def = new HashSet<TempOperand>();
 
-        public Vector<TempOperand> in = new Vector<TempOperand>();
-        public Vector<TempOperand> out = new Vector<TempOperand>();
+        public HashSet<TempOperand> in = new HashSet<TempOperand>();
+        public HashSet<TempOperand> out = new HashSet<TempOperand>();
     }
 
     public static class R extends Instr {

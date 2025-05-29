@@ -4,44 +4,11 @@ import compiler.phase.imcgen.*;
 
 import java.util.Arrays;
 import java.util.Vector;
-import java.util.HashMap;
-
 
 public class ASM {
     public static abstract class Operand {
         @Override
         public abstract String toString();
-    }
-
-    public static HashMap<String, Reg> regs = new HashMap<>();
-
-    public static Reg x0 = new Reg("x0"); // zero
-    public static Reg x1 = new Reg("ra"); // ra
-    public static Reg x2 = new Reg("sp"); // sp
-    public static Reg x3 = new Reg("gp"); // gp
-    public static Reg x4 = new Reg("tp"); // tp
-
-    public static class Reg {
-        String name;
-        IMC.TEMP temp;
-
-        public Reg(String name) {
-            this.name = name;
-            regs.put(name, this);
-        }
-
-        public Reg(IMC.TEMP temp) {
-            this.temp = temp;
-            this.name = temp.temp.toString();
-            regs.put(name, this);
-        }
-
-        public String toString() {
-            if(temp != null) {
-                return temp.temp.toString();
-            }
-            return name;
-        }
     }
 
     public static class NameOperand extends Operand {
@@ -138,6 +105,9 @@ public class ASM {
         public String opcode;
         public Vector<TempOperand> use = new Vector<TempOperand>();
         public Vector<TempOperand> def = new Vector<TempOperand>();
+
+        public Vector<TempOperand> in = new Vector<TempOperand>();
+        public Vector<TempOperand> out = new Vector<TempOperand>();
     }
 
     public static class R extends Instr {
