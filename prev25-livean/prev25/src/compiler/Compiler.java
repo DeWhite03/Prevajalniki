@@ -223,7 +223,7 @@ public class Compiler {
 
 				// Linearization of intermediate code.
 				try (ImcLin imclin = new ImcLin()) {
-					Abstr.tree.accept(new oldChunkGenerator(), null);
+					Abstr.tree.accept(new ChunkGenerator(), null);
 					imclin.log();
 
 					if (false) {
@@ -245,7 +245,7 @@ public class Compiler {
 					LivenessAnalyzer.analyzeChunks();
 					// System.out.println(liveAn.toString());
 				}
-				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
+				if (cmdLineOptValues.get("--target-phase").equals("livean"))
 					break;
 
 				
@@ -253,7 +253,7 @@ public class Compiler {
 					regAll.allocate();
 					System.out.println(regAll.toString());
 				}
-				if (cmdLineOptValues.get("--target-phase").equals("asmgen"))
+				if (cmdLineOptValues.get("--target-phase").equals("regall"))
 					break;
 				// Do not loop... ever.
 				break;

@@ -1,9 +1,10 @@
 var b: int
 fun main() : int =
     let 
-        fun f(): int = return 1
+        fun f(a: int): int = return a
     in 
-        return f()
+        b = 3,
+        return f(b)
     end,
     return 0
 
