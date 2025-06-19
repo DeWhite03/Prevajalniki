@@ -38,7 +38,7 @@ public class Compiler {
 
 	/** All valid phases name of the compiler. */
 	private static final Vector<String> phaseNames = new Vector<String>(
-			Arrays.asList("none", "all", "lexan", "synan", "abstr", "seman", "memory", "imcgen", "imclin"));
+			Arrays.asList("none", "all", "lexan", "synan", "abstr", "seman", "memory", "imcgen", "imclin", "asmgen", "livean", "regall"));
 
 	/**
 	 * Returns the value of a command line option.
@@ -223,10 +223,10 @@ public class Compiler {
 
 				// Linearization of intermediate code.
 				try (ImcLin imclin = new ImcLin()) {
-					Abstr.tree.accept(new ChunkGenerator(), null);
+					// Abstr.tree.accept(new ChunkGenerator(), null);
+					Abstr.tree.accept(new oldChunkGenerator(), null);
 					imclin.log();
-
-					if (false) {
+					if (true) {
 						Interpreter interpreter = new Interpreter(ImcLin.dataChunks(), ImcLin.codeChunks());
 						System.out.println("EXIT CODE: " + interpreter.run("_main"));
 					}

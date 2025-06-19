@@ -1,8 +1,11 @@
 fun putchar(c: char): void
+fun putint(x: int): void
 var i : int
 fun main(): int =
     while i < 10 do
         putchar('h'),
+        putchar('\0x0A'),
+        putint(i),
         i = i + 1
     end,
     return 0
