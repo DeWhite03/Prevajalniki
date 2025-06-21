@@ -1,4 +1,5 @@
 fun putchar(c: char): void
+fun putint(x: int): void
 
 fun main(): int =
     puts("Hello World\0x0A"),

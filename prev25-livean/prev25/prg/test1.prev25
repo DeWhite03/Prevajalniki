@@ -1,0 +1,45 @@
+fun putint(n: int): void
+fun putchar(c: char): void
+fun new(size: int): ^int
+
+var N: int
+fun main(): int =
+    N = 1,
+    let 
+        var arr: ^int
+    in
+        arr = new(N * sizeof int),
+
+        set_array(arr, N),
+        print_array(arr, N)
+    end,
+    return 0
+
+fun print_array(arr: ^int, len: int): void =
+    putchar('['),
+    let var i: int in
+        i = 0,
+        while i < len do
+            putchar(' '),
+            #putint(at(arr, i)^),
+            putint(arr^),
+            i = i + 1
+        end
+    end,
+    putchar(' '),
+    putchar(']'),
+    putchar('\0x0A')
+
+fun set_array(arr: ^int, len: int): void =
+    let 
+        var i: int
+    in
+        i = 0,
+        while i < len do
+            at(arr, i)^ = len - i,
+            i = i + 1
+        end
+    end
+
+fun at(arr: ^int, idx: int): ^int =
+    return {{arr: int} + (idx * (sizeof int)): ^int}

@@ -1,0 +1,18 @@
+fun putint(x: int): void
+fun putchar(c: char): void
+
+fun main(): int =
+    let 
+        var i: int
+    in
+        i = 0,
+        while i <= 15 do
+            putint(f(i)),
+            putchar('\0x0A'),
+            i = i + 1
+        end
+    end,
+    return 0
+
+fun f(i: int): int =
+    return i + 1

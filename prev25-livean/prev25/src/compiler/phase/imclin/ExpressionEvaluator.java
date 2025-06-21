@@ -12,11 +12,15 @@ public class ExpressionEvaluator
         IMC.Expr fstExpr = binOp.fstExpr.accept(this, stmts);
         MEM.Temp temp1 = new MEM.Temp();
         stmts.add(new IMC.MOVE(new IMC.TEMP(temp1), fstExpr));
+
         IMC.Expr sndExpr = binOp.sndExpr.accept(this, stmts);
-        MEM.Temp temp2 = new MEM.Temp();
-        stmts.add(new IMC.MOVE(new IMC.TEMP(temp2), sndExpr));
+        if (!(sndExpr instanceof IMC.CONST)) {
+            MEM.Temp temp2 = new MEM.Temp();
+            stmts.add(new IMC.MOVE(new IMC.TEMP(temp2), sndExpr));
+            sndExpr = new IMC.TEMP(temp2);
+        }
         MEM.Temp resultTemp = new MEM.Temp();
-        stmts.add(new IMC.MOVE(new IMC.TEMP(resultTemp), new IMC.BINOP(binOp.oper, new IMC.TEMP(temp1), new IMC.TEMP(temp2))));
+        stmts.add(new IMC.MOVE(new IMC.TEMP(resultTemp), new IMC.BINOP(binOp.oper, new IMC.TEMP(temp1), sndExpr)));
         return new IMC.TEMP(resultTemp);
     }
 

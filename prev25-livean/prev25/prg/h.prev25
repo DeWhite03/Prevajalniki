@@ -2,6 +2,7 @@ fun putchar(c: char): void
 fun putint(x: int): void
 var i : int
 fun main(): int =
+    i = 0,
     while i < 10 do
         putchar('h'),
         putchar('\0x0A'),

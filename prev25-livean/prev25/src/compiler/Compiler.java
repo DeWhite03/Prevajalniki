@@ -223,8 +223,8 @@ public class Compiler {
 
 				// Linearization of intermediate code.
 				try (ImcLin imclin = new ImcLin()) {
-					// Abstr.tree.accept(new ChunkGenerator(), null);
-					Abstr.tree.accept(new oldChunkGenerator(), null);
+					Abstr.tree.accept(new ChunkGenerator(), null);
+					// Abstr.tree.accept(new oldChunkGenerator(), null);
 					imclin.log();
 					if (true) {
 						Interpreter interpreter = new Interpreter(ImcLin.dataChunks(), ImcLin.codeChunks());

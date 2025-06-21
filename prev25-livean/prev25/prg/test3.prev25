@@ -1,0 +1,6 @@
+var a: ^int
+var b: ^int
+
+fun main(): int =
+    a^ = 5,
+    return a^

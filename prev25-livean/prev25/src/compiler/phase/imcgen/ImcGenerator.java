@@ -305,9 +305,17 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
         var functionExpr = (IMC.Expr) callExpr.funExpr.accept(this, arg);
         var context = (ImcTracker) arg;
 
+        boolean hasFunction = false;
+        // Process all argument expressions
+        // for (var expr : callExpr.argExprs) {
+        //     if (expr instanceof AST.CallExpr)
+        //         hasFunction = true;
+        // }
         // Add static link as the first argument
-        argsExprs.add(new IMC.MEM8(context.staticLink));
-        argsSizes.add(8L);
+        // if (hasFunction) {
+            argsExprs.add(new IMC.MEM8(context.staticLink));
+            argsSizes.add(8L);
+        // }
 
         // Process all argument expressions
         for (var expr : callExpr.argExprs) {
@@ -470,7 +478,9 @@ public class ImcGenerator implements AST.FullVisitor<Object, ImcTracker> {
 
     @Override
     public IMC.Expr visit(SfxExpr sfxExpr, ImcTracker arg) {
-
+        if (SemAn.ofType.get(sfxExpr) == TYP.CharType.type) {
+            return ImcGen.expr.put(sfxExpr, new IMC.MEM1((IMC.Expr) sfxExpr.subExpr.accept(this, arg)));
+        }
         return ImcGen.expr.put(sfxExpr, new IMC.MEM8((IMC.Expr) sfxExpr.subExpr.accept(this, arg)));
     }
 

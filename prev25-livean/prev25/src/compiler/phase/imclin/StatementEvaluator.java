@@ -68,32 +68,51 @@ public class StatementEvaluator implements IMC.Visitor<Vector<IMC.Stmt>, Object>
         if (move.dst instanceof IMC.MEM1 mem1) {
             Vector<IMC.Stmt> result=new Vector<IMC.Stmt>();
             IMC.Expr dstExpr = mem1.addr.accept(new ExpressionEvaluator(), result);
-            MEM.Temp dstTemp = new MEM.Temp();
-            result.add(new IMC.MOVE(new IMC.TEMP(dstTemp), dstExpr));
+            if (!(dstExpr instanceof IMC.TEMP)) {
+                MEM.Temp dstTemp = new MEM.Temp();
+                result.add(new IMC.MOVE(new IMC.TEMP(dstTemp), dstExpr));
+                dstExpr = new IMC.TEMP(dstTemp);
+            }
+
             IMC.Expr srcExpr = move.src.accept(new ExpressionEvaluator(), result);
-            MEM.Temp srcTemp = new MEM.Temp();
-            result.add(new IMC.MOVE(new IMC.TEMP(srcTemp), srcExpr));
-            result.add(new IMC.MOVE(new IMC.MEM1(new IMC.TEMP(dstTemp)), new IMC.TEMP(srcTemp)));
+            if (!(srcExpr instanceof IMC.CONST)) {
+
+                MEM.Temp srcTemp = new MEM.Temp();
+                result.add(new IMC.MOVE(new IMC.TEMP(srcTemp), srcExpr));
+                srcExpr = new IMC.TEMP(srcTemp);
+            }
+            result.add(new IMC.MOVE(new IMC.MEM1(dstExpr), srcExpr));
             return result;
         }
-        if (move.dst instanceof IMC.MEM8 mem1) {
+        if (move.dst instanceof IMC.MEM8 mem8) {
             Vector<IMC.Stmt> result = new Vector<IMC.Stmt>();
-            IMC.Expr dstExpr = mem1.addr.accept(new ExpressionEvaluator(), result);
-            MEM.Temp dstTemp = new MEM.Temp();
-            result.add(new IMC.MOVE(new IMC.TEMP(dstTemp), dstExpr));
+            IMC.Expr dstExpr = mem8.addr.accept(new ExpressionEvaluator(), result);
+
+            if (!(dstExpr instanceof IMC.TEMP)) {
+                MEM.Temp dstTemp = new MEM.Temp();
+                result.add(new IMC.MOVE(new IMC.TEMP(dstTemp), dstExpr));
+                dstExpr = new IMC.TEMP(dstTemp);
+            }
+
             IMC.Expr srcExpr = move.src.accept(new ExpressionEvaluator(), result);
-            MEM.Temp srcTemp = new MEM.Temp();
-            result.add(new IMC.MOVE(new IMC.TEMP(srcTemp), srcExpr));
-            result.add(new IMC.MOVE(new IMC.MEM8(new IMC.TEMP(dstTemp)), new IMC.TEMP(srcTemp)));
+            if (!(srcExpr instanceof IMC.CONST)) {
+                MEM.Temp srcTemp = new MEM.Temp();
+                result.add(new IMC.MOVE(new IMC.TEMP(srcTemp), srcExpr));
+                srcExpr = new IMC.TEMP(srcTemp);
+            }
+            result.add(new IMC.MOVE(new IMC.MEM8(dstExpr), srcExpr));
             return result;
         }
         if (move.dst instanceof IMC.TEMP temp) {
             Vector<IMC.Stmt> result = new Vector<IMC.Stmt>();
             MEM.Temp dstTemp = temp.temp;
             IMC.Expr srcExpr = move.src.accept(new ExpressionEvaluator(), result);
-            MEM.Temp srcTemp = new MEM.Temp();
-            result.add(new IMC.MOVE(new IMC.TEMP(srcTemp), srcExpr));
-            result.add(new IMC.MOVE(new IMC.TEMP(dstTemp), new IMC.TEMP(srcTemp)));
+            // MEM.Temp srcTemp = new MEM.Temp();
+            // result.add(new IMC.MOVE(new IMC.TEMP(srcTemp), srcExpr));
+            // result.add(new IMC.MOVE(new IMC.TEMP(dstTemp), new IMC.TEMP(srcTemp)));
+            // if (!(srcExpr instanceof IMC.TEMP))
+            result.add(new IMC.MOVE(new IMC.TEMP(dstTemp), srcExpr));
+                
             return result;
         }
         throw new Report.InternalError();

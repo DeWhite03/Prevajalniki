@@ -1,0 +1,22 @@
+fun putint(x: int): void
+fun putchar(c: char): void
+
+fun main(): int =
+    let 
+        var i: int
+    in
+        i = 0,
+        while i <= 15 do
+            printInt(f(i), "g"),
+            #putint(f(i)),
+            i = i + 1
+        end
+    end,
+    return 0
+
+fun f(i: int): int =
+    return i + 1
+
+fun printInt( x: int, msg: ^char): void =
+    putint(x),
+    putchar('\0x0A')

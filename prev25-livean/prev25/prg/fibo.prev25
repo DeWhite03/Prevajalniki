@@ -9,13 +9,17 @@ fun fib(n: int): int =
     return fib(n-1) + fib(n - 2)
 
 fun main(): int =
-
-    let var i: int in
+    let 
+        var i: int
+    in
         i = 0,
         while i <= 15 do
             puts("fib("),
             putint(i),
-            printInt(") = " , fib(i)),
+            #printInt(") = " , fib(i)),
+            puts(") = "),
+            putint(fib(i)),
+            putchar('\0x0A'),
             i = i + 1
         end
     end,
@@ -27,11 +31,9 @@ fun printInt(msg: ^char, x: int): void =
     putchar('\0x0A')
 
 fun puts(str: ^char): void =
-    let 
-        var i: int
+    let
         var p: ^char
     in
-        i = 0,
         p = str,
         while p^ != '\0x00' do
             putchar(p^),
