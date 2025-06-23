@@ -7,14 +7,6 @@ import java.util.*;
 
 public class StatementEvaluator implements IMC.Visitor<Vector<IMC.Stmt>, Object> {
 
-    public Vector<IMC.Stmt> visit(IMC.BINOP binOp, Object visArg) {
-        throw new Report.InternalError();
-    }
-
-    public Vector<IMC.Stmt> visit(IMC.CALL call, Object visArg) {
-        throw new Report.InternalError();
-    }
-
     public Vector<IMC.Stmt> visit(IMC.CJUMP cjump, Object visArg) {
         Vector<IMC.Stmt> result= new Vector<IMC.Stmt>();
         IMC.Expr cond = cjump.cond.accept(new ExpressionEvaluator(), result);
@@ -22,20 +14,16 @@ public class StatementEvaluator implements IMC.Visitor<Vector<IMC.Stmt>, Object>
         return result;
     }
 
-    public Vector<IMC.Stmt> visit(IMC.CONST constant, Object visArg) {
-        throw new Report.InternalError();
-    }
-
     public Vector<IMC.Stmt> visit(IMC.ESTMT eStmt, Object visArg) {
         if (eStmt.expr instanceof IMC.CALL) {
             Vector<IMC.Stmt> result = new Vector<IMC.Stmt>();
             IMC.CALL imcCall = (IMC.CALL) eStmt.expr;
-            Vector<IMC.Expr> canonArgs = new Vector<IMC.Expr>();
+            Vector<IMC.Expr> exprs = new Vector<IMC.Expr>();
             for (IMC.Expr arg : imcCall.args) {
-                IMC.Expr canonArg=arg.accept(new ExpressionEvaluator(), result);
-                canonArgs.add(canonArg);
+                IMC.Expr expr=arg.accept(new ExpressionEvaluator(), result);
+                exprs.add(expr);
             }
-            result.add(new IMC.ESTMT(new IMC.CALL(imcCall.addr, imcCall.offs, canonArgs)));
+            result.add(new IMC.ESTMT(new IMC.CALL(imcCall.addr, imcCall.offs, exprs)));
             return result;
         }
         Vector<IMC.Stmt> result = new Vector<IMC.Stmt>();
@@ -54,14 +42,6 @@ public class StatementEvaluator implements IMC.Visitor<Vector<IMC.Stmt>, Object>
         Vector<IMC.Stmt> result = new Vector<IMC.Stmt>();
         result.add(new IMC.LABEL(label.label));
         return result;
-    }
-
-    public Vector<IMC.Stmt> visit(IMC.MEM1 mem, Object visArg) {
-        throw new Report.InternalError();
-    }
-
-    public Vector<IMC.Stmt> visit(IMC.MEM8 mem, Object visArg) {
-        throw new Report.InternalError();
     }
 
     public Vector<IMC.Stmt> visit(IMC.MOVE move, Object visArg) {
@@ -118,20 +98,45 @@ public class StatementEvaluator implements IMC.Visitor<Vector<IMC.Stmt>, Object>
         throw new Report.InternalError();
     }
 
-    public Vector<IMC.Stmt> visit(IMC.NAME name, Object visArg) {
-        throw new Report.InternalError();
-    }
-
-    public Vector<IMC.Stmt> visit(IMC.SEXPR sExpr, Object visArg) {
-        throw new Report.InternalError();
-    }
-
     public Vector<IMC.Stmt> visit(IMC.STMTS stmts, Object visArg) {
         Vector<IMC.Stmt> res = new Vector<IMC.Stmt>();
         for (IMC.Stmt stmt : stmts.stmts) {
             res.addAll(stmt.accept(this, null));
         }
         return res;
+    }
+
+
+
+
+    
+
+    public Vector<IMC.Stmt> visit(IMC.BINOP binOp, Object visArg) {
+        throw new Report.InternalError();
+    }
+
+    public Vector<IMC.Stmt> visit(IMC.CALL call, Object visArg) {
+        throw new Report.InternalError();
+    }
+
+    public Vector<IMC.Stmt> visit(IMC.CONST constant, Object visArg) {
+        throw new Report.InternalError();
+    }
+
+    public Vector<IMC.Stmt> visit(IMC.MEM1 mem, Object visArg) {
+        throw new Report.InternalError();
+    }
+
+    public Vector<IMC.Stmt> visit(IMC.MEM8 mem, Object visArg) {
+        throw new Report.InternalError();
+    }
+
+    public Vector<IMC.Stmt> visit(IMC.NAME name, Object visArg) {
+        throw new Report.InternalError();
+    }
+
+    public Vector<IMC.Stmt> visit(IMC.SEXPR sExpr, Object visArg) {
+        throw new Report.InternalError();
     }
 
     public Vector<IMC.Stmt> visit(IMC.TEMP temp, Object visArg) {
